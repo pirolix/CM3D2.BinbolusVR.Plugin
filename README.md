@@ -2,6 +2,7 @@
 メイドさんエディット画面(level5)、夜伽画面(level14)において、画面を分割して[両眼視差立体視](https://ja.wikipedia.org/wiki/%E7%AB%8B%E4%BD%93%E8%A6%96)を可能にします。  
 公式から Oculus VR 対応パッチが公開されていますが、そんな立派なモン持ってねーYO！　貧乏人ナメんなYO！　貧乏＋Oculus＝ビンボラスってことで。
 
+サンプル画像で立体視できない人は導入しても意味がありません。がんばって練習しよう。
 ![交差法の画像サンプル](https://raw.githubusercontent.com/pirolix/CM3D2.BinbolusVR.Plugin/master/sample_cross1.png) 
 
 ## 自前でコンパイル
