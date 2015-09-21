@@ -10,7 +10,8 @@
 
 ## 使い方
 0. 下準備
-  1. `(ゲームのインストールパス)/UnityInjector`以下にCM3D2.BinbolusVR.Plugin.dllをコピーします
+  0. [UnityInjector](http://www.hongfire.com/forum/showthread.php/444567-UnityInjector-Plugin-Powered-Unity-Code-Injector)が必要です。[neguse11 さまのネットワークインストーラーもどき](https://github.com/neguse11/cm3d2_plugins_okiba)を利用しての導入を強く推奨。ちょー楽チン。
+  1. `(ゲームのインストールパス)/UnityInjector`以下に`CM3D2.BinbolusVR.Plugin.dll`をコピーします
 1. CM3D2を起動してゲームをプレイ開始、メイド管理メニュー→エディットメニューと進んで、メイドさんのエディット画面を開くか、または夜伽プレイを始めます。
 2. `K`キーを押すと、立体視モードのオン/オフを切り替えます。
 3. `L`キーを押すと、立体視モードをを切り替えます。やりやすい方でお使いください。
@@ -27,6 +28,7 @@
 ## 仕様/未実装/今後の野望など
 * 天頂付近などカメラアングルが±180付近では視差が安定しません。補正方法が良くわからない。
 * 体勢に依って、これまた視差画像がうまく見えないことがあります。
+* 夜伽前のプレイルーム選択画面から効きますが仕様です。
 
 ## いろいろ
 * カメラを追加してレンダ出力を得るコードは、[k8PzhOFo0氏のFaceCamera.Plugin](https://github.com/k8PzhOFo0/CM3D2FaceCamera)を大変参考にさせて頂きました。ありがとうございます。
