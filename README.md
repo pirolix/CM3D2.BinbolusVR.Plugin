@@ -2,8 +2,9 @@
 メイドさんのエディット(level5)、夜伽シーン(level14)、ダンスシーン(level4,20)において、画面を分割して[両眼視差立体視](https://ja.wikipedia.org/wiki/%E7%AB%8B%E4%BD%93%E8%A6%96)を可能にします。  
 公式から [Oculus VR 対応パッチ](http://kissdiary.blog11.fc2.com/blog-entry-571.html)が公開されていますが、Oculus なんて立派なモン持ってねーYO！　貧乏人ナメんなYO！　貧乏＋Oculus＝ビンボラスってことで。
 
-サンプル画像で立体視できない人は導入しても意味がありません。がんばって練習しよう。
-![交差法の画像サンプル](https://raw.githubusercontent.com/pirolix/CM3D2.BinbolusVR.Plugin/master/sample_cross1.png) 
+サンプル画像で立体視できない人は導入しても意味がありません。がんばって練習しよう。  
+裸眼での立体視が苦手だったり、どっぷり没入したい人向けに [Head Mount Display](http://www.amazon.co.jp/gp/search/ref=as_li_ss_tl?ie=UTF8&camp=247&creative=7399&field-keywords=%E3%83%98%E3%83%83%E3%83%89%E3%83%9E%E3%82%A6%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%82%B9%E3%83%97%E3%83%AC%E3%82%A4&index=blended&linkCode=ur2&tag=openmagicvox-22) でも使えるようになりました (New@0.0.1.5)
+![裸眼での交差法立体視の画像サンプル](https://raw.githubusercontent.com/pirolix/CM3D2.BinbolusVR.Plugin/master/sample_cross1.png) 
 
 ## 機能
 * 右目と左目ごとに視差を考慮した画面を表示して立体視を可能にします
@@ -19,8 +20,8 @@
   * 夜伽シーン
   * ダンス/ドキドキ☆Fallin' Love (New@0.0.1.4)
   * ダンス/entracne to you (New@0.0.1.4)
-2. `K`キーを押すと、立体視モードのオン/オフを切り替えます。
-3. `L`キーを押すと、立体視モードをを切り替えます。やりやすい方でお使いください。
+2. `K`キーを押すと、立体視モードを切り替えます。
+3. `L`キーを押すと、視差モードを切り替えます。見やすい方でお使いください。
   * 交差法 … 寄り目にして左右の目でそれぞれ反対の画像を見る方法
   * 平行法 … 遠くを見るようにしながら左右の目でそれぞれの画像を見る方法
 
