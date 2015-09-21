@@ -7,7 +7,7 @@ namespace CM3D2.BinbolusVR
 {
     [PluginFilter( "CM3D2x64" ),
      PluginFilter( "CM3D2x86" ),
-     PluginName( "BinbolusVR" ), PluginVersion("0.0.0.1")]
+     PluginName( "BinbolusVR" ), PluginVersion("0.0.1.1")]
 
     public class BinbolusVR : PluginBase
     {
@@ -21,7 +21,7 @@ namespace CM3D2.BinbolusVR
 
         private string      m_cfgKeyStereoPower = "k";
         private string      m_cfgKeyStereoMode  = "l";
-        private float       m_cfgParallaxScale  = 0.2f;
+        private float       m_cfgParallaxScale  = 0.1f;
 
         /// <summary>プラグインが初期化されたタイミングで呼ばれる</summary>
         public void Awake()
@@ -88,6 +88,7 @@ namespace CM3D2.BinbolusVR
             //Console.WriteLine( "AroundAngle x={0} Y={1}", v.x, v.y );
             Vector3 parallax = (new Vector3( Mathf.Cos( v.x * Mathf.Deg2Rad ), 0.0f, -Mathf.Sin( v.x * Mathf.Deg2Rad )))
                     * m_cfgParallaxScale
+                    * GameMain.Instance.MainCamera.GetDistance()
                     * ( m_StereoMode ? -1 : 1 );
                      
             if( m_StereoPower ) {
