@@ -5,6 +5,11 @@
 サンプル画像で立体視できない人は導入しても意味がありません。がんばって練習しよう。
 ![交差法の画像サンプル](https://raw.githubusercontent.com/pirolix/CM3D2.BinbolusVR.Plugin/master/sample_cross1.png) 
 
+## 機能
+* 右目と左目ごとに視差を考慮した画面を表示して立体視を可能にします
+* 交差法または平行法による裸眼での立体視が可能です
+* Head Mount Display などで使えるように SideBySide または TopAndBottom 表示方式に対応 (New@0.0.1.5) #1
+
 ## 使い方
 0. 下準備
   0. [UnityInjector](http://www.hongfire.com/forum/showthread.php/444567-UnityInjector-Plugin-Powered-Unity-Code-Injector)が必要です。[neguse11 さまのネットワークインストーラーもどき](https://github.com/neguse11/cm3d2_plugins_okiba)を利用しての導入を強く推奨。ちょー楽チン。
@@ -25,9 +30,18 @@
 * `TogglePower` … 立体視モードのオン/オフを切り替えに利用するキーを指定します。デフォルトで`K`キーが割り当てられていますが、他のプラグインと衝突する場合などに変更してください。
 * `ToggleMode` … 立体視モードの交差法/平行法の切り替えに利用するキーを指定します。デフォルトで`L`キーが割り当てられていますが、他のプラグインと衝突する場合などに変更してください。
 * `ParallaxScale` … 両目の距離を指定するスケールです。大きくすると画像のズレ(視差)が大きくなり、立体感が増すと思うんですが(自身なし)、あまり大きくしすぎると両目で結像しにくくなります。
+* `Powers` … 使用する立体モードを空白区切りで列挙します。例えば、`Powers=NAKED_EYES SIDEBYSIDE` と設定した場合、`K`キーを押すたびに、オフ→NAKED_EYES モード→SIDEBYSIDE モード→オフ→...と切り替わります。もし、SIDEBYSIDE モードしか使わないのであれば、`Powers=SIDEBYSIDE` と設定してください。デフォルト設定は `Powers=NAKED_EYES` で、NAKED_EYES モードのみ有効になっています。
+  * `NAKED_EYES` … 裸眼による立体視モードを有効にします。
+  * `SIDEBYSIDE` … 横方向に2倍に圧縮された画像を、左右に並べて表示する Side By Side 表示モードを有効にします。Head Mount Display などで利用できます。
+  * `TOPANDBOTTOM` … 縦方向に2倍に圧縮された画像を、上下に並べて表示する Side By Side 表示モードを有効にします。Head Mount Display などで利用できます。
 
-## 自前でコンパイル
+## 自前でコンパイルする
 [neguse11 さまのネットワークインストーラーもどき](https://github.com/neguse11/cm3d2_plugins_okiba)に居候しています。`cm3d2_plugins_okiba-master`フォルダの下に`CM3D2.BinbolusVR.Plugin`ディレクトリを置いて`(ゲームのインストールパス)/cm3d2_plugins_okiba-master/CM3D2.BinbolusVR.Plugin/src/compile.bat`を実行してください。追加で ExIni ライブラリを利用しています。
+
+## 動作確認
+* SkillCommandShortCut 併用可
+* CameraUtility 併用可
+* MaidVoicePitch 併用可
 
 ## 仕様/未実装/今後の野望など
 * ~~天頂付近などカメラアングルが±180付近では視差が安定しません。補正方法が良くわからない。~~ 0.0.1.3 で修正

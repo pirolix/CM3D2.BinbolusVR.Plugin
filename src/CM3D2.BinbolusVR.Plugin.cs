@@ -7,7 +7,7 @@ namespace CM3D2.BinbolusVR
 {
     [PluginFilter( "CM3D2x64" ),
      PluginFilter( "CM3D2x86" ),
-     PluginName( "BinbolusVR" ), PluginVersion("0.0.1.4")]
+     PluginName( "BinbolusVR" ), PluginVersion( "0.0.1.5" )]
 
     public class BinbolusVR : PluginBase
     {
@@ -16,12 +16,22 @@ namespace CM3D2.BinbolusVR
 
         private Camera      m_CameraL;
         private Camera      m_CameraR;
-        private bool        m_StereoPower;
+        private enum STEREO_POWER_ENUMS {
+            _ENUM_FIRST_VALUE = 0,
+            POWER_OFF = _ENUM_FIRST_VALUE,
+            NAKED_EYES,
+            SIDEBYSIDE,
+            TOPANDBOTTOM,
+            _ENUM_MAX_VALUE,
+        }
+        private STEREO_POWER_ENUMS
+                            m_StereoPower;
         private bool        m_StereoMode;
 
         private string      m_cfgKeyStereoPower = "k";
         private string      m_cfgKeyStereoMode  = "l";
         private float       m_cfgParallaxScale  = 0.1f;
+        private string      m_cfgStereoPowers   = "NAKED_EYES";
 
         /// <summary>プラグインが初期化されたタイミングで呼ばれる</summary>
         public void Awake()
@@ -51,13 +61,11 @@ namespace CM3D2.BinbolusVR
                 // 左目用カメラ
                 m_CameraL = (new GameObject( "ParallaxCameraL" )).AddComponent<Camera>();
                 m_CameraL.CopyFrom( Camera.main );
-                m_CameraL.rect = new Rect( 0.0f, 0.0f, 0.5f, 1.0f );
                 // 右目用カメラ
                 m_CameraR = (new GameObject( "ParallaxCameraR" )).AddComponent<Camera>();
                 m_CameraR.CopyFrom( Camera.main );
-                m_CameraR.rect = new Rect( 0.5f, 0.0f, 0.5f, 1.0f );
 
-                SetStereoPower( false );
+                SetStereoPower( STEREO_POWER_ENUMS.POWER_OFF );
                 SetStereoMode( true );
 
                 m_AllowUpdate = true;
@@ -74,6 +82,8 @@ namespace CM3D2.BinbolusVR
             Console.WriteLine( "{0}: Config::ToggleKeyMode = {1}", this.GetPluginName(), m_cfgKeyStereoMode );
             m_cfgParallaxScale = GetPreferences( "Config", "ParallaxScale", m_cfgParallaxScale );
             Console.WriteLine( "{0}: Config::ParallaxScale = {1}", this.GetPluginName(), m_cfgParallaxScale );
+            m_cfgStereoPowers = GetPreferences( "Config", "Powers", m_cfgStereoPowers ).ToLower();
+            Console.WriteLine( "{0}: Config::Powers = {1}", this.GetPluginName(), m_cfgStereoPowers );
         }
 
         /// <summary>画面を更新する</summary>
@@ -94,7 +104,7 @@ namespace CM3D2.BinbolusVR
                     * GameMain.Instance.MainCamera.GetDistance()
                     * ( m_StereoMode ? -1 : 1 );
                      
-            if( m_StereoPower ) {
+            if( STEREO_POWER_ENUMS.POWER_OFF != m_StereoPower ) {
                 // MainCamera が狙っている target:Vector3
                 Vector3 target = GameMain.Instance.MainCamera.GetTargetPos();
                 // カメラの場所を視差分だけずらして
@@ -108,7 +118,15 @@ namespace CM3D2.BinbolusVR
  
             // キー入力で切替える：オン/オフ
             if( Input.GetKeyDown( m_cfgKeyStereoPower )) {
-                m_StereoPower = !m_StereoPower;
+                m_StereoPower = m_StereoPower + 1;
+                if( STEREO_POWER_ENUMS.NAKED_EYES == m_StereoPower && !m_cfgStereoPowers.Contains( "NAKED_EYES".ToLower()))
+                    m_StereoPower = m_StereoPower + 1;
+                if( STEREO_POWER_ENUMS.SIDEBYSIDE == m_StereoPower && !m_cfgStereoPowers.Contains( "SIDEBYSIDE".ToLower()))
+                    m_StereoPower = m_StereoPower + 1;
+                if( STEREO_POWER_ENUMS.TOPANDBOTTOM == m_StereoPower && !m_cfgStereoPowers.Contains( "TOPANDBOTTOM".ToLower()))
+                    m_StereoPower = m_StereoPower + 1;
+                if( STEREO_POWER_ENUMS._ENUM_MAX_VALUE == m_StereoPower )
+                    m_StereoPower = STEREO_POWER_ENUMS._ENUM_FIRST_VALUE;
                 this.SetStereoPower( m_StereoPower );
             }
 
@@ -125,7 +143,7 @@ namespace CM3D2.BinbolusVR
             if( !m_AllowUpdate )
                 return;
 
-            if( m_StereoPower )
+            if( STEREO_POWER_ENUMS.POWER_OFF != m_StereoPower )
                 GUI.Label( new Rect( 20,20, 200,50 ),
                         ( m_StereoMode ? "交差法" : "平行法" ) + "(" + m_cfgKeyStereoMode + "キーで切替)" );
             else
@@ -134,10 +152,40 @@ namespace CM3D2.BinbolusVR
         }
 
         /// <summary>立体視のオン/オフを設定する</summary>
-        private bool SetStereoPower( bool power )
+        private STEREO_POWER_ENUMS SetStereoPower( STEREO_POWER_ENUMS power )
         {
-            m_CameraL.gameObject.SetActive( power );
-            m_CameraR.gameObject.SetActive( power );
+            // パワー ON/OFF
+            m_CameraL.gameObject.SetActive( STEREO_POWER_ENUMS.POWER_OFF != power );
+            m_CameraR.gameObject.SetActive( STEREO_POWER_ENUMS.POWER_OFF != power );
+            // パワーによって画面の分割などを変化する
+            switch( power ) {
+            case STEREO_POWER_ENUMS.NAKED_EYES:
+                // 裸眼による交差法/平衡法
+                m_CameraL.rect = new Rect( 0.0f, 0.0f, 0.5f, 1.0f );
+                m_CameraR.rect = new Rect( 0.5f, 0.0f, 0.5f, 1.0f );
+                m_CameraL.aspect = m_CameraR.aspect = 1.0f;
+                break;
+
+            case STEREO_POWER_ENUMS.SIDEBYSIDE:
+                // HMD などの左右分割方式
+                m_CameraL.rect = new Rect( 0.0f, 0.0f, 0.5f, 1.0f );
+                m_CameraR.rect = new Rect( 0.5f, 0.0f, 0.5f, 1.0f );
+                m_CameraL.aspect = m_CameraR.aspect = 2.0f;
+                break;
+
+            case STEREO_POWER_ENUMS.TOPANDBOTTOM:
+                // HMD などの上下分割方式
+                m_CameraL.rect = new Rect( 0.0f, 0.0f, 1.0f, 0.5f );
+                m_CameraR.rect = new Rect( 0.0f, 0.5f, 1.0f, 0.5f );
+                m_CameraL.aspect = m_CameraR.aspect = 2.0f;
+                break;
+
+            case STEREO_POWER_ENUMS.POWER_OFF:
+            default:
+                m_CameraL.gameObject.SetActive( false );
+                m_CameraR.gameObject.SetActive( false );
+                break;
+            }
             return( m_StereoPower = power );
         }
 
