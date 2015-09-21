@@ -7,7 +7,7 @@ namespace CM3D2.BinbolusVR
 {
     [PluginFilter( "CM3D2x64" ),
      PluginFilter( "CM3D2x86" ),
-     PluginName( "BinbolusVR" ), PluginVersion("0.0.1.3")]
+     PluginName( "BinbolusVR" ), PluginVersion("0.0.1.4")]
 
     public class BinbolusVR : PluginBase
     {
@@ -42,9 +42,12 @@ namespace CM3D2.BinbolusVR
             m_AllowUpdate = false;
             if( m_bOculusVR)
                 return;
-            // level: 5)エディット 14)夜伽
-            if( level == 5 || level == 14 )
-            {
+            // 動作するシーン
+            if( level == 5  // エディット
+             || level == 14 // 夜伽
+             || level == 4  // ダンス/ドキドキ☆Fallin' Love
+             || level == 20 // ダンス/entracne to you
+            ){
                 // 左目用カメラ
                 m_CameraL = (new GameObject( "ParallaxCameraL" )).AddComponent<Camera>();
                 m_CameraL.CopyFrom( Camera.main );
