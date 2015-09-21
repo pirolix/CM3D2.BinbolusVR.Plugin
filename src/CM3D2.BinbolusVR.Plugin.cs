@@ -7,7 +7,7 @@ namespace CM3D2.BinbolusVR
 {
     [PluginFilter( "CM3D2x64" ),
      PluginFilter( "CM3D2x86" ),
-     PluginName( "BinbolusVR" ), PluginVersion("0.0.1.1")]
+     PluginName( "BinbolusVR" ), PluginVersion("0.0.1.3")]
 
     public class BinbolusVR : PluginBase
     {
@@ -47,12 +47,12 @@ namespace CM3D2.BinbolusVR
             {
                 // 左目用カメラ
                 m_CameraL = (new GameObject( "ParallaxCameraL" )).AddComponent<Camera>();
-                m_CameraL.CopyFrom(Camera.main);
-                m_CameraL.rect = new Rect(0.0f, 0.0f, 0.5f, 1.0f);
+                m_CameraL.CopyFrom( Camera.main );
+                m_CameraL.rect = new Rect( 0.0f, 0.0f, 0.5f, 1.0f );
                 // 右目用カメラ
                 m_CameraR = (new GameObject( "ParallaxCameraR" )).AddComponent<Camera>();
-                m_CameraR.CopyFrom(Camera.main);
-                m_CameraR.rect = new Rect(0.5f, 0.0f, 0.5f, 1.0f);
+                m_CameraR.CopyFrom( Camera.main );
+                m_CameraR.rect = new Rect( 0.5f, 0.0f, 0.5f, 1.0f );
 
                 SetStereoPower( false );
                 SetStereoMode( true );
@@ -95,11 +95,12 @@ namespace CM3D2.BinbolusVR
                 // MainCamera が狙っている target:Vector3
                 Vector3 target = GameMain.Instance.MainCamera.GetTargetPos();
                 // カメラの場所を視差分だけずらして
-                m_CameraL.gameObject.transform.position = Camera.main.transform.position - parallax;
-                m_CameraR.gameObject.transform.position = Camera.main.transform.position + parallax;
+                Transform mainCameraT = Camera.main.transform;
+                m_CameraL.transform.position = mainCameraT.position - parallax;
+                m_CameraR.transform.position = mainCameraT.position + parallax;
                 // target を狙いなおす
-                m_CameraL.gameObject.transform.LookAt( target, maid.transform.up );
-                m_CameraR.gameObject.transform.LookAt( target, maid.transform.up );
+                m_CameraL.transform.LookAt( target, mainCameraT.up );
+                m_CameraR.transform.LookAt( target, mainCameraT.up );
             }
  
             // キー入力で切替える：オン/オフ
