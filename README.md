@@ -30,10 +30,11 @@
 * `TogglePower` … 立体視モードのオン/オフを切り替えに利用するキーを指定します。デフォルトで`K`キーが割り当てられていますが、他のプラグインと衝突する場合などに変更してください。
 * `ToggleMode` … 立体視モードの交差法/平行法の切り替えに利用するキーを指定します。デフォルトで`L`キーが割り当てられていますが、他のプラグインと衝突する場合などに変更してください。
 * `ParallaxScale` … 両目の距離を指定するスケールです。大きくすると画像のズレ(視差)が大きくなり、立体感が増すと思うんですが(自身なし)、あまり大きくしすぎると両目で結像しにくくなります。
-* `Powers` … 使用する立体モードを空白区切りで列挙します。例えば、`Powers=NAKED_EYES SIDEBYSIDE` と設定した場合、`K`キーを押すたびに、オフ→NAKED_EYES モード→SIDEBYSIDE モード→オフ→...と切り替わります。もし、SIDEBYSIDE モードしか使わないのであれば、`Powers=SIDEBYSIDE` と設定してください。デフォルト設定は `Powers=NAKED_EYES` で、NAKED_EYES モードのみ有効になっています。
+* `Powers` … 使用する立体モードを空白区切りで列挙します。例えば、`Powers=NAKED_EYES SIDEBYSIDE` と設定した場合、`K`キーを押すたびに、オフ→NAKED_EYES モード→SIDEBYSIDE モード→オフ→...と切り替わります。もし、SIDEBYSIDE モードしか使わないのであれば、`Powers=SIDEBYSIDE` と設定してください。  
+デフォルト設定は `Powers=NAKED_EYES` で、NAKED_EYES モードのみ有効になっています。手持ちの Head Mount Display でご利用の際には、`SIDEBYSIDE` または `TOPANDBOTTOM` を追記してください。
   * `NAKED_EYES` … 裸眼による立体視モードを有効にします。
-  * `SIDEBYSIDE` … 横方向に2倍に圧縮された画像を、左右に並べて表示する Side By Side 表示モードを有効にします。Head Mount Display などで利用できます。
-  * `TOPANDBOTTOM` … 縦方向に2倍に圧縮された画像を、上下に並べて表示する Side By Side 表示モードを有効にします。Head Mount Display などで利用できます。
+  * `SIDEBYSIDE` … 横方向に2倍に圧縮された画像を、左右に並べて表示する Side-By-Side 表示モードを有効にします。Head Mount Display などで利用できます。
+  *  … 縦方向に2倍に圧縮された画像を、上下に並べて表示する Up-And-Bottom 表示モードを有効にします。Head Mount Display などで利用できます。
 
 ## 自前でコンパイルする
 [neguse11 さまのネットワークインストーラーもどき](https://github.com/neguse11/cm3d2_plugins_okiba)に居候しています。`cm3d2_plugins_okiba-master`フォルダの下に`CM3D2.BinbolusVR.Plugin`ディレクトリを置いて`(ゲームのインストールパス)/cm3d2_plugins_okiba-master/CM3D2.BinbolusVR.Plugin/src/compile.bat`を実行してください。追加で ExIni ライブラリを利用しています。
