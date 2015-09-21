@@ -3,13 +3,13 @@
 公式から [Oculus VR 対応パッチ](http://kissdiary.blog11.fc2.com/blog-entry-571.html)が公開されていますが、Oculus なんて立派なモン持ってねーYO！　貧乏人ナメんなYO！　貧乏＋Oculus＝ビンボラスってことで。
 
 サンプル画像で立体視できない人は導入しても意味がありません。がんばって練習しよう。  
-裸眼での立体視が苦手だったり、どっぷり没入したい人向けに [Head Mount Display](http://www.amazon.co.jp/gp/search/ref=as_li_ss_tl?ie=UTF8&camp=247&creative=7399&field-keywords=%E3%83%98%E3%83%83%E3%83%89%E3%83%9E%E3%82%A6%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%82%B9%E3%83%97%E3%83%AC%E3%82%A4&index=blended&linkCode=ur2&tag=openmagicvox-22) でも使えるようになりました (New@0.0.1.5)
+裸眼での立体視が苦手だったり、どっぷり没入したい人向けに Head Mount Display でも使えるようになりました (New@0.0.1.5)
 ![裸眼での交差法立体視の画像サンプル](https://raw.githubusercontent.com/pirolix/CM3D2.BinbolusVR.Plugin/master/sample_cross1.png) 
 
 ## 機能
 * 右目と左目ごとに視差を考慮した画面を表示して立体視を可能にします
 * 交差法または平行法による裸眼での立体視が可能です
-* [Head Mount Display](http://www.amazon.co.jp/gp/search/ref=as_li_ss_tl?ie=UTF8&camp=247&creative=7399&field-keywords=%E3%83%98%E3%83%83%E3%83%89%E3%83%9E%E3%82%A6%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%82%B9%E3%83%97%E3%83%AC%E3%82%A4&index=blended&linkCode=ur2&tag=openmagicvox-22) などで使えるように SideBySide または TopAndBottom 表示方式に対応しています (New@0.0.1.5) #1
+* Head Mount Display などで使えるように SideBySide または TopAndBottom 表示方式に対応しています (New@0.0.1.5) #1
 
 ## 使い方
 0. 下準備
@@ -53,6 +53,7 @@
 ## いろいろ
 * カメラを追加してレンダ出力を得るコードは、[k8PzhOFo0氏のFaceCamera.Plugin](https://github.com/k8PzhOFo0/CM3D2FaceCamera)を大変参考にさせて頂きました。ありがとうございます。
 * .iniファイルから設定値を読むコードは、[neguse11氏のLogWindow](https://github.com/neguse11/cm3d2_plugins_okiba/tree/develop/LogWindow)を大変参考にさせて頂きました。ありがとうございます。
+* [Amazon.co.jp で Head Mount Display の商品一覧](http://www.amazon.co.jp/gp/search/ref=as_li_ss_tl?ie=UTF8&camp=247&creative=7399&field-keywords=%E3%83%98%E3%83%83%E3%83%89%E3%83%9E%E3%82%A6%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%82%B9%E3%83%97%E3%83%AC%E3%82%A4&index=blended&linkCode=ur2&tag=openmagicvox-22)
 
 ## 連絡先など
 *  [@pirolix twitter](https://twitter.com/pirolix)
