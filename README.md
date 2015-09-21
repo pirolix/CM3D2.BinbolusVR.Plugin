@@ -8,7 +8,7 @@
 ## 機能
 * 右目と左目ごとに視差を考慮した画面を表示して立体視を可能にします
 * 交差法または平行法による裸眼での立体視が可能です
-* Head Mount Display などで使えるように SideBySide または TopAndBottom 表示方式に対応 (New@0.0.1.5) #1
+* [Head Mount Display](http://www.amazon.co.jp/gp/search/ref=as_li_ss_tl?ie=UTF8&camp=247&creative=7399&field-keywords=%E3%83%98%E3%83%83%E3%83%89%E3%83%9E%E3%82%A6%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%82%B9%E3%83%97%E3%83%AC%E3%82%A4&index=blended&linkCode=ur2&tag=openmagicvox-22) などで使えるように SideBySide または TopAndBottom 表示方式に対応しています (New@0.0.1.5) #1
 
 ## 使い方
 0. 下準備
@@ -34,7 +34,7 @@
 デフォルト設定は `Powers=NAKED_EYES` で、NAKED_EYES モードのみ有効になっています。手持ちの Head Mount Display でご利用の際には、`SIDEBYSIDE` または `TOPANDBOTTOM` を追記してください。
   * `NAKED_EYES` … 裸眼による立体視モードを有効にします。
   * `SIDEBYSIDE` … 横方向に2倍に圧縮された画像を、左右に並べて表示する Side-By-Side 表示モードを有効にします。Head Mount Display などで利用できます。
-  *  … 縦方向に2倍に圧縮された画像を、上下に並べて表示する Up-And-Bottom 表示モードを有効にします。Head Mount Display などで利用できます。
+  * `TOPANDBOTTOM` … 縦方向に2倍に圧縮された画像を、上下に並べて表示する Up-And-Bottom 表示モードを有効にします。Head Mount Display などで利用できます。
 
 ## 自前でコンパイルする
 [neguse11 さまのネットワークインストーラーもどき](https://github.com/neguse11/cm3d2_plugins_okiba)に居候しています。`cm3d2_plugins_okiba-master`フォルダの下に`CM3D2.BinbolusVR.Plugin`ディレクトリを置いて`(ゲームのインストールパス)/cm3d2_plugins_okiba-master/CM3D2.BinbolusVR.Plugin/src/compile.bat`を実行してください。追加で ExIni ライブラリを利用しています。
