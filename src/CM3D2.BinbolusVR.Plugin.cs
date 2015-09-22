@@ -11,9 +11,19 @@ namespace CM3D2.BinbolusVR
 
     public class BinbolusVR : PluginBase
     {
-        // 状態管理
-        private bool        m_bOculusVR = false;
-        private bool        m_AllowUpdate = false;
+        #region メンバ変数定義：動作設定値
+        // https://github.com/pirolix/CM3D2.BinbolusVR.Plugin/blob/master/README.md#設定ファイル
+        private string      m_cfgSceneEnable    = "5,14,4,20";
+        private string      m_cfgKeyStereoPower = "K";
+        private string      m_cfgKeyStereoMode  = "L";
+        private float       m_cfgParallaxScale  = 0.1f;
+        private string      m_cfgStereoPowers   = "NAKED_EYES";
+        private string      m_cfgDefaultPower   = "OFF";
+        private string      m_cfgDefaultMode    = "RL";
+        #endregion
+        #region メンバ変数定義：状態管理関係
+        private bool        m_bOculusVR         = false;
+        private bool        m_AllowUpdate       = false;
         private enum STEREO_POWER_ENUMS {
         _ENUM_FIRST_VALUE = 0,
             OFF = _ENUM_FIRST_VALUE,
@@ -24,19 +34,12 @@ namespace CM3D2.BinbolusVR
         }
         private STEREO_POWER_ENUMS
                             m_StereoPower;
-        private bool        m_StereoMode;
-
-        // 動作設定値
-        // https://github.com/pirolix/CM3D2.BinbolusVR.Plugin/blob/master/README.md#設定ファイル
-        private string      m_cfgSceneEnable    = "5,14,4,20";
-        private string      m_cfgKeyStereoPower = "k";
-        private string      m_cfgKeyStereoMode  = "l";
-        private float       m_cfgParallaxScale  = 0.1f;
-        private string      m_cfgStereoPowers   = "NAKED_EYES";
-
-        // オブジェクト
+        private string      m_StereoMode;
+        #endregion
+        #region メンバ変数定義：オブジェクト
         private Camera      m_CameraL;
         private Camera      m_CameraR;
+        #endregion
 
         /// <summary>プラグインが初期化されたタイミングで呼ばれるコンストラクタ</summary>
         public void Awake()
@@ -44,7 +47,7 @@ namespace CM3D2.BinbolusVR
             // VRモードでは動作しない
             m_bOculusVR = Application.dataPath.Contains( "CM3D2VRx64" );
             if( m_bOculusVR ) {
-                Console.WriteLine( "{0}: Occuls Rift is not Support.", this.GetPluginName());
+                Console.WriteLine( "{0}: Occuls Rift is not Support.", GetPluginName());
                 return;
             }
             GameObject.DontDestroyOnLoad( this );
@@ -60,7 +63,7 @@ namespace CM3D2.BinbolusVR
 
             // 現在の level が SceneEnable リストに含まれていたら有効にする
             if(( "," + m_cfgSceneEnable + "," ).Contains( level.ToString())
-                    || "ALL" == m_cfgSceneEnable.ToUpper())
+                    || m_cfgSceneEnable.ToUpper().Contains( "ALL" ))
             {
                 // 左目用カメラ
                 m_CameraL = (new GameObject( "ParallaxCameraL" )).AddComponent<Camera>();
@@ -69,27 +72,11 @@ namespace CM3D2.BinbolusVR
                 m_CameraR = (new GameObject( "ParallaxCameraR" )).AddComponent<Camera>();
                 m_CameraR.CopyFrom( Camera.main );
 
-                SetStereoPower( STEREO_POWER_ENUMS.OFF );
-                SetStereoMode( true );
+                SetStereoPower( m_cfgDefaultPower );
+                SetStereoMode( m_cfgDefaultMode );
 
                 m_AllowUpdate = true;
             }
-        }
-
-        /// <summary>.ini ファイルからプラグイン設定を読み込む</summary>
-        private void GetPluginPreferences()
-        {
-            m_cfgSceneEnable = GetPreferences( "Config", "SceneEnable", m_cfgSceneEnable );
-            Console.WriteLine( "{0}: Config: SceneEnable = {1}", this.GetPluginName(), m_cfgSceneEnable );
-            // http://docs.unity3d.com/Manual/ConventionalGameInput.html
-            m_cfgKeyStereoPower = GetPreferences( "Config", "TogglePower", m_cfgKeyStereoPower ).ToLower();
-            Console.WriteLine( "{0}: Config: ToggleKeyPower = {1}", this.GetPluginName(), m_cfgKeyStereoPower );
-            m_cfgKeyStereoMode = GetPreferences( "Config", "ToggleMode", m_cfgKeyStereoMode ).ToLower();
-            Console.WriteLine( "{0}: Config: ToggleKeyMode = {1}", this.GetPluginName(), m_cfgKeyStereoMode );
-            m_cfgParallaxScale = GetPreferences( "Config", "ParallaxScale", m_cfgParallaxScale );
-            Console.WriteLine( "{0}: Config: ParallaxScale = {1}", this.GetPluginName(), m_cfgParallaxScale );
-            m_cfgStereoPowers = GetPreferences( "Config", "Powers", m_cfgStereoPowers ).ToLower();
-            Console.WriteLine( "{0}: Config: Powers = {1}", this.GetPluginName(), m_cfgStereoPowers );
         }
 
         /// <summary>画面を更新する</summary>
@@ -108,7 +95,7 @@ namespace CM3D2.BinbolusVR
             Vector3 parallax = (new Vector3( Mathf.Cos( v.x * Mathf.Deg2Rad ), 0.0f, -Mathf.Sin( v.x * Mathf.Deg2Rad )))
                     * m_cfgParallaxScale
                     * GameMain.Instance.MainCamera.GetDistance()
-                    * ( m_StereoMode ? -1 : 1 );
+                    * ( m_StereoMode == "RL" ? -1 : 1 );
                      
             if( STEREO_POWER_ENUMS.OFF != m_StereoPower ) {
                 // MainCamera が狙っている target:Vector3
@@ -123,23 +110,23 @@ namespace CM3D2.BinbolusVR
             }
  
             // キー入力で切替える：オン/オフ
-            if( Input.GetKeyDown( m_cfgKeyStereoPower )) {
+            if( Input.GetKeyDown( m_cfgKeyStereoPower.ToLower())) {
                 m_StereoPower = m_StereoPower + 1;
-                if( STEREO_POWER_ENUMS.NAKED_EYES == m_StereoPower && !m_cfgStereoPowers.Contains( "NAKED_EYES".ToLower()))
+                if( STEREO_POWER_ENUMS.NAKED_EYES == m_StereoPower && !m_cfgStereoPowers.ToUpper().Contains( "NAKED_EYES" ))
                     m_StereoPower = m_StereoPower + 1;
-                if( STEREO_POWER_ENUMS.SIDEBYSIDE == m_StereoPower && !m_cfgStereoPowers.Contains( "SIDEBYSIDE".ToLower()))
+                if( STEREO_POWER_ENUMS.SIDEBYSIDE == m_StereoPower && !m_cfgStereoPowers.ToUpper().Contains( "SIDEBYSIDE" ))
                     m_StereoPower = m_StereoPower + 1;
-                if( STEREO_POWER_ENUMS.TOPANDBOTTOM == m_StereoPower && !m_cfgStereoPowers.Contains( "TOPANDBOTTOM".ToLower()))
+                if( STEREO_POWER_ENUMS.TOPANDBOTTOM == m_StereoPower && !m_cfgStereoPowers.ToUpper().Contains( "TOPANDBOTTOM" ))
                     m_StereoPower = m_StereoPower + 1;
                 if( STEREO_POWER_ENUMS._ENUM_MAX_VALUE == m_StereoPower )
                     m_StereoPower = STEREO_POWER_ENUMS._ENUM_FIRST_VALUE;
-                this.SetStereoPower( m_StereoPower );
+                SetStereoPower( m_StereoPower );
             }
 
             // キー入力で切替える：平行法/交差法
-            if( Input.GetKeyDown( m_cfgKeyStereoMode )) {
-                m_StereoMode = !m_StereoMode;
-                this.SetStereoMode( m_StereoMode ); // 不要
+            if( Input.GetKeyDown( m_cfgKeyStereoMode.ToLower())) {
+                m_StereoMode = ( m_StereoMode == "RL" ? "LR" : "RL" );
+                SetStereoMode( m_StereoMode ); // 不要
             }
         }
 
@@ -149,12 +136,14 @@ namespace CM3D2.BinbolusVR
             if( !m_AllowUpdate )
                 return;
 
-            if( STEREO_POWER_ENUMS.OFF != m_StereoPower )
-                GUI.Label( new Rect( 20,20, 200,50 ),
-                        ( m_StereoMode ? "交差法" : "平行法" ) + "(" + m_cfgKeyStereoMode + "キーで切替)" );
+            string label_text = "";
+            if( STEREO_POWER_ENUMS.OFF == m_StereoPower )
+                label_text = m_cfgKeyStereoPower + "キーで" + GetPluginName() + "をオン";
             else
-                GUI.Label( new Rect( 20,20, 200,50 ),
-                        m_cfgKeyStereoPower + "キーで" + this.GetPluginName() + "をオン" );
+                label_text = m_StereoPower.ToString() +
+                        ( m_StereoMode == "RL" ? " 交差法" : " 平行法" ) +
+                        "(" + m_cfgKeyStereoMode + "キーで切替)";
+            GUI.Label( new Rect( 20,20, 200,50 ), label_text );
         }
 
         /// <summary>立体視のオン/オフを設定する</summary>
@@ -195,10 +184,50 @@ namespace CM3D2.BinbolusVR
             return( m_StereoPower = power );
         }
 
+        /// <summary>立体視のオン/オフを設定する</summary>
+        private STEREO_POWER_ENUMS SetStereoPower( string power )
+        {
+            switch( power.ToUpper()) {
+            case "NAKED_EYES":
+                return SetStereoPower( STEREO_POWER_ENUMS.NAKED_EYES );
+            case "SIDEBYSIDE":
+                return SetStereoPower( STEREO_POWER_ENUMS.SIDEBYSIDE );
+            case "TOPANDBOTTOM":
+                return SetStereoPower( STEREO_POWER_ENUMS.TOPANDBOTTOM );
+            case "OFF":
+            default:
+                break;
+            }
+            return SetStereoPower( STEREO_POWER_ENUMS.OFF );
+        }
+
         /// <summary>立体視の交差法/並行法表示を設定する</summary>
-        private bool SetStereoMode( bool mode )
+        private string SetStereoMode( string mode )
         {
             return( m_StereoMode = mode );
+        }
+
+        #region .ini ファイルの読み込み関係
+        /// <summary>.ini ファイルからプラグイン設定を読み込む</summary>
+        private void GetPluginPreferences()
+        {
+            m_cfgSceneEnable = GetPreferences( "Config", "SceneEnable", m_cfgSceneEnable );
+                Console.WriteLine( "{0}: Config: SceneEnable = {1}", GetPluginName(), m_cfgSceneEnable );
+
+            // http://docs.unity3d.com/Manual/ConventionalGameInput.html
+            m_cfgKeyStereoPower = GetPreferences( "Config", "TogglePower", m_cfgKeyStereoPower ).ToUpper();
+                Console.WriteLine( "{0}: Config: ToggleKeyPower = {1}", GetPluginName(), m_cfgKeyStereoPower );
+            m_cfgKeyStereoMode = GetPreferences( "Config", "ToggleMode", m_cfgKeyStereoMode ).ToUpper();
+                Console.WriteLine( "{0}: Config: ToggleKeyMode = {1}", GetPluginName(), m_cfgKeyStereoMode );
+            m_cfgParallaxScale = GetPreferences( "Config", "ParallaxScale", m_cfgParallaxScale );
+                Console.WriteLine( "{0}: Config: ParallaxScale = {1}", GetPluginName(), m_cfgParallaxScale );
+            m_cfgStereoPowers = GetPreferences( "Config", "Powers", m_cfgStereoPowers ).ToUpper();
+                Console.WriteLine( "{0}: Config: Powers = {1}", GetPluginName(), m_cfgStereoPowers );
+
+            m_cfgDefaultPower = GetPreferences( "Config", "DefaultPower", m_cfgDefaultPower ).ToUpper();
+                Console.WriteLine( "{0}: Config: DefaultPower = {1}", GetPluginName(), m_cfgDefaultPower );
+            m_cfgDefaultMode = GetPreferences( "Config", "DefaultMode", m_cfgDefaultMode ).ToUpper();
+                Console.WriteLine( "{0}: Config: DefaultMode = {1}", GetPluginName(), m_cfgDefaultMode );
         }
 
         /// <summary>設定ファイルから string データを読む</summary>
@@ -210,6 +239,19 @@ namespace CM3D2.BinbolusVR
                 SaveConfig();
             }
             return Preferences[section][key].Value;
+        }
+
+        /// <summary>設定ファイルから bool データを読む</summary>
+        private bool GetPreferences( string section, string key, bool defaultValue )
+        {
+            if( !Preferences.HasSection( section ) || !Preferences[section].HasKey( key ) || string.IsNullOrEmpty( Preferences[section][key].Value ))
+            {
+                Preferences[section][key].Value = defaultValue.ToString();
+                SaveConfig();
+            }
+            bool b = defaultValue;
+            bool.TryParse( Preferences[section][key].Value, out b );
+            return b;
         }
 
         /// <summary>設定ファイルから float データを読む</summary>
@@ -224,7 +266,9 @@ namespace CM3D2.BinbolusVR
             float.TryParse( Preferences[section][key].Value, out f );
             return f;
         }
+        #endregion
 
+        #region 汎用メソッド
         /// <summary>プラグイン名を取得する</summary>
         private String GetPluginName()
         {
@@ -236,9 +280,10 @@ namespace CM3D2.BinbolusVR
                     name = att.Name;
             }
             catch( Exception e ) {
-                Console.WriteLine( "{0}::GetPluginName: Exception: {1}", this.GetPluginName(), e.Message );
+                Console.WriteLine( "{0}::GetPluginName: Exception: {1}", GetPluginName(), e.Message );
             }
             return name;
         }
+        #endregion
     }
 }
