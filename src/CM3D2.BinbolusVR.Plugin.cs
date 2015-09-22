@@ -7,7 +7,7 @@ namespace CM3D2.BinbolusVR
 {
     [PluginFilter( "CM3D2x64" ),
      PluginFilter( "CM3D2x86" ),
-     PluginName( "BinbolusVR" ), PluginVersion( "0.0.1.7" )]
+     PluginName( "BinbolusVR" ), PluginVersion( "1.7.0.0" )]
 
     public class BinbolusVR : PluginBase
     {
