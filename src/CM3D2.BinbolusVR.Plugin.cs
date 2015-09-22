@@ -154,13 +154,13 @@ namespace CM3D2.BinbolusVR
             // ParallaxScale の調整モード
             if( (int)DEBUG_LEVELS.PARALLAX_SCALE_ADJ == m_cfg.DebugLevel )
             {
-                if( Input.GetKey( m_cfg.ParaSclAdjKeyInc ) && m_cfg.ParallaxScale < _CONFIG.ParaSclAdjMax ) {
+                if( Input.GetKey( m_cfg.ParaSclAdjKeyInc.ToLower()) && m_cfg.ParallaxScale < _CONFIG.ParaSclAdjMax ) {
                     m_cfg.ParallaxScale += _CONFIG.ParaSclAdjStep
                             * ( Input.GetKey( KeyCode.RightShift ) ? 10 : 1 );
                     if( _CONFIG.ParaSclAdjMax < m_cfg.ParallaxScale )
                         m_cfg.ParallaxScale = _CONFIG.ParaSclAdjMax;
                 }
-                if( Input.GetKey( m_cfg.ParaSclAdjKeyDec ) && 0.0f < m_cfg.ParallaxScale ) {
+                if( Input.GetKey( m_cfg.ParaSclAdjKeyDec.ToLower()) && 0.0f < m_cfg.ParallaxScale ) {
                     m_cfg.ParallaxScale -= _CONFIG.ParaSclAdjStep
                             * ( Input.GetKey( KeyCode.RightShift ) ? 10 : 1 );
                     if( m_cfg.ParallaxScale < 0.0f )
