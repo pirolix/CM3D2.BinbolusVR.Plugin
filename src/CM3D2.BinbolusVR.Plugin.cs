@@ -7,33 +7,38 @@ namespace CM3D2.BinbolusVR
 {
     [PluginFilter( "CM3D2x64" ),
      PluginFilter( "CM3D2x86" ),
-     PluginName( "BinbolusVR" ), PluginVersion( "0.0.1.5" )]
+     PluginName( "BinbolusVR" ), PluginVersion( "0.0.1.6" )]
 
     public class BinbolusVR : PluginBase
     {
+        // 状態管理
         private bool        m_bOculusVR = false;
         private bool        m_AllowUpdate = false;
-
-        private Camera      m_CameraL;
-        private Camera      m_CameraR;
         private enum STEREO_POWER_ENUMS {
-            _ENUM_FIRST_VALUE = 0,
-            POWER_OFF = _ENUM_FIRST_VALUE,
+        _ENUM_FIRST_VALUE = 0,
+            OFF = _ENUM_FIRST_VALUE,
             NAKED_EYES,
             SIDEBYSIDE,
             TOPANDBOTTOM,
-            _ENUM_MAX_VALUE,
+        _ENUM_MAX_VALUE,
         }
         private STEREO_POWER_ENUMS
                             m_StereoPower;
         private bool        m_StereoMode;
 
+        // 動作設定値
+        // https://github.com/pirolix/CM3D2.BinbolusVR.Plugin/blob/master/README.md#設定ファイル
+        private string      m_cfgSceneEnable    = "5,14,4,20";
         private string      m_cfgKeyStereoPower = "k";
         private string      m_cfgKeyStereoMode  = "l";
         private float       m_cfgParallaxScale  = 0.1f;
         private string      m_cfgStereoPowers   = "NAKED_EYES";
 
-        /// <summary>プラグインが初期化されたタイミングで呼ばれる</summary>
+        // オブジェクト
+        private Camera      m_CameraL;
+        private Camera      m_CameraR;
+
+        /// <summary>プラグインが初期化されたタイミングで呼ばれるコンストラクタ</summary>
         public void Awake()
         {
             // VRモードでは動作しない
@@ -52,12 +57,11 @@ namespace CM3D2.BinbolusVR
             m_AllowUpdate = false;
             if( m_bOculusVR)
                 return;
-            // 動作するシーン
-            if( level == 5  // エディット
-             || level == 14 // 夜伽
-             || level == 4  // ダンス/ドキドキ☆Fallin' Love
-             || level == 20 // ダンス/entracne to you
-            ){
+
+            // 現在の level が SceneEnable リストに含まれていたら有効にする
+            if(( "," + m_cfgSceneEnable + "," ).Contains( level.ToString())
+                    || "ALL" == m_cfgSceneEnable.ToUpper())
+            {
                 // 左目用カメラ
                 m_CameraL = (new GameObject( "ParallaxCameraL" )).AddComponent<Camera>();
                 m_CameraL.CopyFrom( Camera.main );
@@ -65,7 +69,7 @@ namespace CM3D2.BinbolusVR
                 m_CameraR = (new GameObject( "ParallaxCameraR" )).AddComponent<Camera>();
                 m_CameraR.CopyFrom( Camera.main );
 
-                SetStereoPower( STEREO_POWER_ENUMS.POWER_OFF );
+                SetStereoPower( STEREO_POWER_ENUMS.OFF );
                 SetStereoMode( true );
 
                 m_AllowUpdate = true;
@@ -75,15 +79,17 @@ namespace CM3D2.BinbolusVR
         /// <summary>.ini ファイルからプラグイン設定を読み込む</summary>
         private void GetPluginPreferences()
         {
+            m_cfgSceneEnable = GetPreferences( "Config", "SceneEnable", m_cfgSceneEnable );
+            Console.WriteLine( "{0}: Config: SceneEnable = {1}", this.GetPluginName(), m_cfgSceneEnable );
             // http://docs.unity3d.com/Manual/ConventionalGameInput.html
             m_cfgKeyStereoPower = GetPreferences( "Config", "TogglePower", m_cfgKeyStereoPower ).ToLower();
-            Console.WriteLine( "{0}: Config::ToggleKeyPower = {1}", this.GetPluginName(), m_cfgKeyStereoPower );
+            Console.WriteLine( "{0}: Config: ToggleKeyPower = {1}", this.GetPluginName(), m_cfgKeyStereoPower );
             m_cfgKeyStereoMode = GetPreferences( "Config", "ToggleMode", m_cfgKeyStereoMode ).ToLower();
-            Console.WriteLine( "{0}: Config::ToggleKeyMode = {1}", this.GetPluginName(), m_cfgKeyStereoMode );
+            Console.WriteLine( "{0}: Config: ToggleKeyMode = {1}", this.GetPluginName(), m_cfgKeyStereoMode );
             m_cfgParallaxScale = GetPreferences( "Config", "ParallaxScale", m_cfgParallaxScale );
-            Console.WriteLine( "{0}: Config::ParallaxScale = {1}", this.GetPluginName(), m_cfgParallaxScale );
+            Console.WriteLine( "{0}: Config: ParallaxScale = {1}", this.GetPluginName(), m_cfgParallaxScale );
             m_cfgStereoPowers = GetPreferences( "Config", "Powers", m_cfgStereoPowers ).ToLower();
-            Console.WriteLine( "{0}: Config::Powers = {1}", this.GetPluginName(), m_cfgStereoPowers );
+            Console.WriteLine( "{0}: Config: Powers = {1}", this.GetPluginName(), m_cfgStereoPowers );
         }
 
         /// <summary>画面を更新する</summary>
@@ -104,7 +110,7 @@ namespace CM3D2.BinbolusVR
                     * GameMain.Instance.MainCamera.GetDistance()
                     * ( m_StereoMode ? -1 : 1 );
                      
-            if( STEREO_POWER_ENUMS.POWER_OFF != m_StereoPower ) {
+            if( STEREO_POWER_ENUMS.OFF != m_StereoPower ) {
                 // MainCamera が狙っている target:Vector3
                 Vector3 target = GameMain.Instance.MainCamera.GetTargetPos();
                 // カメラの場所を視差分だけずらして
@@ -143,7 +149,7 @@ namespace CM3D2.BinbolusVR
             if( !m_AllowUpdate )
                 return;
 
-            if( STEREO_POWER_ENUMS.POWER_OFF != m_StereoPower )
+            if( STEREO_POWER_ENUMS.OFF != m_StereoPower )
                 GUI.Label( new Rect( 20,20, 200,50 ),
                         ( m_StereoMode ? "交差法" : "平行法" ) + "(" + m_cfgKeyStereoMode + "キーで切替)" );
             else
@@ -155,9 +161,9 @@ namespace CM3D2.BinbolusVR
         private STEREO_POWER_ENUMS SetStereoPower( STEREO_POWER_ENUMS power )
         {
             // パワー ON/OFF
-            m_CameraL.gameObject.SetActive( STEREO_POWER_ENUMS.POWER_OFF != power );
-            m_CameraR.gameObject.SetActive( STEREO_POWER_ENUMS.POWER_OFF != power );
-            // パワーによって画面の分割などを変化する
+            m_CameraL.gameObject.SetActive( STEREO_POWER_ENUMS.OFF != power );
+            m_CameraR.gameObject.SetActive( STEREO_POWER_ENUMS.OFF != power );
+            // STEREO_POWER_ENUMS に応じて画面分割などを変化する
             switch( power ) {
             case STEREO_POWER_ENUMS.NAKED_EYES:
                 // 裸眼による交差法/平衡法
@@ -180,7 +186,7 @@ namespace CM3D2.BinbolusVR
                 m_CameraL.aspect = m_CameraR.aspect = 2.0f;
                 break;
 
-            case STEREO_POWER_ENUMS.POWER_OFF:
+            case STEREO_POWER_ENUMS.OFF:
             default:
                 m_CameraL.gameObject.SetActive( false );
                 m_CameraR.gameObject.SetActive( false );
