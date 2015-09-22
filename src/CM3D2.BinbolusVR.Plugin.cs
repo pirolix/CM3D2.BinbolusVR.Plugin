@@ -13,17 +13,30 @@ namespace CM3D2.BinbolusVR
     {
         #region メンバ変数定義：動作設定値
         // https://github.com/pirolix/CM3D2.BinbolusVR.Plugin/blob/master/README.md#設定ファイル
-        private string      m_cfgSceneEnable    = "5,14,4,20";
-        private string      m_cfgKeyStereoPower = "K";
-        private string      m_cfgKeyStereoMode  = "L";
-        private float       m_cfgParallaxScale  = 0.1f;
-        private string      m_cfgStereoPowers   = "NAKED_EYES";
-        private string      m_cfgDefaultPower   = "OFF";
-        private string      m_cfgDefaultMode    = "RL";
+        private string          m_cfgSceneEnable        = "5,14,4,20";
+        private string          m_cfgKeyStereoPower     = "K";
+        private string          m_cfgKeyStereoMode      = "L";
+        private float           m_cfgParallaxScale      = 0.1f;
+        private string          m_cfgStereoPowers       = "NAKED_EYES";
+        private string          m_cfgDefaultPower       = "OFF";
+        private string          m_cfgDefaultMode        = "RL";
+        // 視差スケール調整モード関係
+        private const float     m_cfgParaSclAdjMax      = 1.0f;
+        private const float     m_cfgParaSclAdjStep     = 0.01f;
+        // http://docs.unity3d.com/Manual/ConventionalGameInput.html
+        private const string    m_cfgParaSclAdjKeyInc   = "page up";
+        private const string    m_cfgParaSclAdjKeyDec   = "page down";
+        // デバッグモード関係
+        private enum DEBUG_ENUMS {
+            NONE                = 0,
+            SHOW_CAPTION        = 1,
+            PARALLAX_SCALE_ADJ  = 2,
+        }
+        private int             m_cfgDebug              = (int)DEBUG_ENUMS.SHOW_CAPTION;
         #endregion
         #region メンバ変数定義：状態管理関係
-        private bool        m_bOculusVR         = false;
-        private bool        m_AllowUpdate       = false;
+        private bool            m_bOculusVR             = false;
+        private bool            m_AllowUpdate           = false;
         private enum STEREO_POWER_ENUMS {
         _ENUM_FIRST_VALUE = 0,
             OFF = _ENUM_FIRST_VALUE,
@@ -33,12 +46,12 @@ namespace CM3D2.BinbolusVR
         _ENUM_MAX_VALUE,
         }
         private STEREO_POWER_ENUMS
-                            m_StereoPower;
-        private string      m_StereoMode;
+                                m_StereoPower;
+        private string          m_StereoMode;
         #endregion
         #region メンバ変数定義：オブジェクト
-        private Camera      m_CameraL;
-        private Camera      m_CameraR;
+        private Camera          m_CameraL;
+        private Camera          m_CameraR;
         #endregion
 
         /// <summary>プラグインが初期化されたタイミングで呼ばれるコンストラクタ</summary>
@@ -85,10 +98,6 @@ namespace CM3D2.BinbolusVR
             if( !m_AllowUpdate )
                 return;
 
-            Maid maid = GameMain.Instance.CharacterMgr.GetMaid( 0 );
-            if( maid == null )
-                return;
-
             // 視差ベクトル
             Vector2 v = GameMain.Instance.MainCamera.GetAroundAngle();
             //Console.WriteLine( "AroundAngle x={0} Y={1}", v.x, v.y );
@@ -128,6 +137,21 @@ namespace CM3D2.BinbolusVR
                 m_StereoMode = ( m_StereoMode == "RL" ? "LR" : "RL" );
                 SetStereoMode( m_StereoMode ); // 不要
             }
+
+            // ParallaxScale の調整モード
+            if( (int)DEBUG_ENUMS.PARALLAX_SCALE_ADJ == m_cfgDebug )
+            {
+                if( Input.GetKeyDown( m_cfgParaSclAdjKeyInc ) && m_cfgParallaxScale < m_cfgParaSclAdjMax ) {
+                    m_cfgParallaxScale += m_cfgParaSclAdjStep;
+                    if( m_cfgParaSclAdjMax < m_cfgParallaxScale )
+                        m_cfgParallaxScale = m_cfgParaSclAdjMax;
+                }
+                if( Input.GetKeyDown( m_cfgParaSclAdjKeyDec ) && 0.0f < m_cfgParallaxScale ) {
+                    m_cfgParallaxScale -= m_cfgParaSclAdjStep;
+                    if( m_cfgParallaxScale < 0.0f )
+                        m_cfgParallaxScale = 0.0f;
+                }
+            }
         }
 
         /// <summary>GUI レイヤの描画？など</summary>
@@ -136,14 +160,19 @@ namespace CM3D2.BinbolusVR
             if( !m_AllowUpdate )
                 return;
 
-            string label_text = "";
-            if( STEREO_POWER_ENUMS.OFF == m_StereoPower )
-                label_text = m_cfgKeyStereoPower + "キーで" + GetPluginName() + "をオン";
-            else
-                label_text = m_StereoPower.ToString() +
-                        ( m_StereoMode == "RL" ? " 交差法" : " 平行法" ) +
-                        "(" + m_cfgKeyStereoMode + "キーで切替)";
-            GUI.Label( new Rect( 20,20, 200,50 ), label_text );
+            if( (int)DEBUG_ENUMS.NONE != m_cfgDebug ) {
+                string label_text = "";
+                if( STEREO_POWER_ENUMS.OFF == m_StereoPower )
+                    label_text = m_cfgKeyStereoPower + "キーで" + GetPluginName() + "をオン";
+                else {
+                    label_text = m_StereoPower.ToString() + "\n" +
+                            ( m_StereoMode == "RL" ? "交差法" : "平行法" ) +
+                            " (" + m_cfgKeyStereoMode + "キーで切替)\n";
+                    if( (int)DEBUG_ENUMS.PARALLAX_SCALE_ADJ == m_cfgDebug )
+                        label_text += "ParallaxScale=" + m_cfgParallaxScale.ToString("f2");
+                }
+                GUI.Label( new Rect( 20,20, 200,100 ), label_text );
+            }
         }
 
         /// <summary>立体視のオン/オフを設定する</summary>
@@ -211,23 +240,25 @@ namespace CM3D2.BinbolusVR
         /// <summary>.ini ファイルからプラグイン設定を読み込む</summary>
         private void GetPluginPreferences()
         {
-            m_cfgSceneEnable = GetPreferences( "Config", "SceneEnable", m_cfgSceneEnable );
-                Console.WriteLine( "{0}: Config: SceneEnable = {1}", GetPluginName(), m_cfgSceneEnable );
-
-            // http://docs.unity3d.com/Manual/ConventionalGameInput.html
+            m_cfgSceneEnable    = GetPreferences( "Config", "SceneEnable", m_cfgSceneEnable ).ToUpper();
             m_cfgKeyStereoPower = GetPreferences( "Config", "TogglePower", m_cfgKeyStereoPower ).ToUpper();
-                Console.WriteLine( "{0}: Config: ToggleKeyPower = {1}", GetPluginName(), m_cfgKeyStereoPower );
-            m_cfgKeyStereoMode = GetPreferences( "Config", "ToggleMode", m_cfgKeyStereoMode ).ToUpper();
-                Console.WriteLine( "{0}: Config: ToggleKeyMode = {1}", GetPluginName(), m_cfgKeyStereoMode );
-            m_cfgParallaxScale = GetPreferences( "Config", "ParallaxScale", m_cfgParallaxScale );
-                Console.WriteLine( "{0}: Config: ParallaxScale = {1}", GetPluginName(), m_cfgParallaxScale );
-            m_cfgStereoPowers = GetPreferences( "Config", "Powers", m_cfgStereoPowers ).ToUpper();
-                Console.WriteLine( "{0}: Config: Powers = {1}", GetPluginName(), m_cfgStereoPowers );
+            m_cfgKeyStereoMode  = GetPreferences( "Config", "ToggleMode", m_cfgKeyStereoMode ).ToUpper();
+            m_cfgParallaxScale  = GetPreferences( "Config", "ParallaxScale", m_cfgParallaxScale );
+            m_cfgStereoPowers   = GetPreferences( "Config", "Powers", m_cfgStereoPowers ).ToUpper();
+            m_cfgDefaultPower   = GetPreferences( "Config", "DefaultPower", m_cfgDefaultPower ).ToUpper();
+            m_cfgDefaultMode    = GetPreferences( "Config", "DefaultMode", m_cfgDefaultMode ).ToUpper();
+            m_cfgDebug          = GetPreferences( "Config", "DebugMode", m_cfgDebug );
 
-            m_cfgDefaultPower = GetPreferences( "Config", "DefaultPower", m_cfgDefaultPower ).ToUpper();
-                Console.WriteLine( "{0}: Config: DefaultPower = {1}", GetPluginName(), m_cfgDefaultPower );
-            m_cfgDefaultMode = GetPreferences( "Config", "DefaultMode", m_cfgDefaultMode ).ToUpper();
-                Console.WriteLine( "{0}: Config: DefaultMode = {1}", GetPluginName(), m_cfgDefaultMode );
+            if( (int)DEBUG_ENUMS.NONE != m_cfgDebug ) {
+                Console.WriteLine( "{0}: Config: SceneEnable= {1}", GetPluginName(), m_cfgSceneEnable );
+                Console.WriteLine( "{0}: Config: ToggleKeyPower= {1}", GetPluginName(), m_cfgKeyStereoPower );
+                Console.WriteLine( "{0}: Config: ToggleKeyMode= {1}", GetPluginName(), m_cfgKeyStereoMode );
+                Console.WriteLine( "{0}: Config: ParallaxScale= {1}", GetPluginName(), m_cfgParallaxScale );
+                Console.WriteLine( "{0}: Config: Powers= {1}", GetPluginName(), m_cfgStereoPowers );
+                Console.WriteLine( "{0}: Config: DefaultPower= {1}", GetPluginName(), m_cfgDefaultPower );
+                Console.WriteLine( "{0}: Config: DefaultMode= {1}", GetPluginName(), m_cfgDefaultMode );
+                Console.WriteLine( "{0}: Config: DebugMode= {1}", GetPluginName(), m_cfgDebug );
+            }
         }
 
         /// <summary>設定ファイルから string データを読む</summary>
@@ -252,6 +283,19 @@ namespace CM3D2.BinbolusVR
             bool b = defaultValue;
             bool.TryParse( Preferences[section][key].Value, out b );
             return b;
+        }
+
+        /// <summary>設定ファイルから int データを読む</summary>
+        private int GetPreferences( string section, string key, int defaultValue )
+        {
+            if( !Preferences.HasSection( section ) || !Preferences[section].HasKey( key ) || string.IsNullOrEmpty( Preferences[section][key].Value ))
+            {
+                Preferences[section][key].Value = defaultValue.ToString();
+                SaveConfig();
+            }
+            int i = defaultValue;
+            int.TryParse( Preferences[section][key].Value, out i );
+            return i;
         }
 
         /// <summary>設定ファイルから float データを読む</summary>
