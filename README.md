@@ -98,6 +98,9 @@
 * .iniファイルから設定値を読むコードは、[neguse11氏のLogWindow](https://github.com/neguse11/cm3d2_plugins_okiba/tree/develop/LogWindow)を大変参考にさせて頂きました。ありがとうございます。
 * [Amazon.co.jp で Head Mount Display の商品一覧](http://www.amazon.co.jp/gp/search/ref=as_li_ss_tl?ie=UTF8&camp=247&creative=7399&field-keywords=%E3%83%98%E3%83%83%E3%83%89%E3%83%9E%E3%82%A6%E3%83%B3%E3%83%88%E3%83%87%E3%82%A3%E3%82%B9%E3%83%97%E3%83%AC%E3%82%A4&index=blended&linkCode=ur2&tag=openmagicvox-22)
 
+## ライセンス
+* [LGPL ](https://ja.wikipedia.org/wiki/GNU_Lesser_General_Public_License)
+
 ## 連絡先など
 *  [@pirolix twitter](https://twitter.com/pirolix)
 *  [カスタムメイド3D したらば談話室](http://jbbs.shitaraba.net/game/55179/)の改造スレッドをちょくちょく見ています。
