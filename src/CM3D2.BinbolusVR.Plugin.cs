@@ -1,13 +1,12 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityInjector;
 using UnityInjector.Attributes;
-
+using UnityEngine.SceneManagement;
+using System.Text.RegularExpressions;
 namespace CM3D2.BinbolusVR
 {
-    [PluginFilter( "CM3D2x64" ),
-     PluginFilter( "CM3D2x86" ),
-     PluginName( "BinbolusVR" ), PluginVersion( "1.7.0.0" )]
+    [PluginName( "BinbolusVRforC(O)M3D2" ), PluginVersion( "1.8.0.0" )]
 
     public class BinbolusVR : PluginBase
     {
@@ -37,7 +36,8 @@ namespace CM3D2.BinbolusVR
         private _CONFIG         m_cfg;
         #endregion
         #region メンバ変数定義：状態管理関係
-        private bool            m_bOculusVR             = false;
+        private bool            m_bOculusVRCM             = false;
+        private bool            m_bOculusVRCOM            = false;
         private bool            m_AllowUpdate           = false;
         private enum POWERS {
         _ENUM_FIRST_VALUE = 0,
@@ -71,9 +71,10 @@ namespace CM3D2.BinbolusVR
             m_cfg.ParaSclAdjKeyDec  = "Page Down";
 
             // VRモードでは動作しない
-            m_bOculusVR = Application.dataPath.Contains( "CM3D2VRx64" );
-            if( m_bOculusVR ) {
-                Console.WriteLine( "{0}: Occuls Rift is not Support.", GetPluginName());
+            m_bOculusVRCM = Application.dataPath.Contains( "CM3D2VRx64" );
+            m_bOculusVRCOM = Application.dataPath.Contains( "COM3D2VRx64" );
+            if( m_bOculusVRCM || m_bOculusVRCOM) {
+                Console.WriteLine( "{0}:you are playing with True VR, so binbolusVR is off", GetPluginName());
                 return;
             }
             GameObject.DontDestroyOnLoad( this );
@@ -84,13 +85,18 @@ namespace CM3D2.BinbolusVR
         public void OnLevelWasLoaded(int level)
         {
             m_AllowUpdate = false;
-            if( m_bOculusVR)
+            if( m_bOculusVRCM || m_bOculusVRCOM )
                 return;
-
-            // 現在の level が ScenesEnable リストに含まれていたら有効にする
+            //Console.WriteLine( "now scene is {0}",SceneManager.GetActiveScene().name);
+            bool isdance = false;
+            //scene名を正規表現で検出し ダンスの場合isdanceをtrueにセット
+            isdance = Regex.IsMatch(SceneManager.GetActiveScene().name, "SceneDance_.+_Release");
+            //Console.WriteLine( "now isdance is {0}",isdance);
+            // 現在の level が ScenesEnable リストに含まれている or ダンスシーンなら有効にする
             if(( "," + m_cfg.ScenesEnable + "," ).Contains( level.ToString())
-                    || m_cfg.ScenesEnable.ToUpper().Contains( "ALL" ))
+                    || m_cfg.ScenesEnable.ToUpper().Contains( "ALL" ) || isdance)
             {
+                //Console.WriteLine( "now level is {0},binbolus plugin is called",level);
                 // 左目用カメラ
                 m_CameraL = (new GameObject( "ParallaxCameraL" )).AddComponent<Camera>();
                 m_CameraL.CopyFrom( Camera.main );
@@ -111,26 +117,24 @@ namespace CM3D2.BinbolusVR
             if( !m_AllowUpdate )
                 return;
 
-            // 視差ベクトル
-            Vector2 v = GameMain.Instance.MainCamera.GetAroundAngle();
-            //Console.WriteLine( "AroundAngle x={0} Y={1}", v.x, v.y );
-            Vector3 parallax = (new Vector3( Mathf.Cos( v.x * Mathf.Deg2Rad ), 0.0f, -Mathf.Sin( v.x * Mathf.Deg2Rad )))
-                    * m_cfg.ParallaxScale
-                    * GameMain.Instance.MainCamera.GetDistance()
-                    * ( m_Mode == "RL" ? -1 : 1 );
-                     
             if( POWERS.OFF != m_Power ) {
-                // MainCamera が狙っている target:Vector3
-                Vector3 target = GameMain.Instance.MainCamera.GetTargetPos();
-                // カメラの場所を視差分だけずらして
                 Transform mainCameraT = Camera.main.transform;
+                //メインカメラが向いている方向を保存
+                Vector3 v = mainCameraT.transform.localEulerAngles;
+                //メインカメラの向きに応じて視差を生成 
+                Vector3 parallax = (new Vector3( Mathf.Cos( v.y * Mathf.Deg2Rad ) * Mathf.Cos(v.z * Mathf.Deg2Rad ),
+                             Mathf.Cos(v.x * Mathf.Deg2Rad) * Mathf.Sin(v.z * Mathf.Deg2Rad), -Mathf.Sin( v.y * Mathf.Deg2Rad ) * Mathf.Cos(v.z * Mathf.Deg2Rad)))
+                    * m_cfg.ParallaxScale
+                    * ( m_Mode == "RL" ? -1 : 1 );
+                //Console.WriteLine( "AroundAngle x={0} y={1},z={2}", v.x, v.y, v.z);
+                // カメラの場所を視差分だけずらして
                 m_CameraL.transform.position = mainCameraT.position - parallax;
                 m_CameraR.transform.position = mainCameraT.position + parallax;
-                // target を狙いなおす
-                m_CameraL.transform.LookAt( target, mainCameraT.up );
-                m_CameraR.transform.LookAt( target, mainCameraT.up );
+                // メインカメラの向き(保存済み)に合わせて両目カメラを向ける
+                m_CameraL.transform.localEulerAngles = v;
+                m_CameraR.transform.localEulerAngles = v;
             }
- 
+
             // キー入力で切替える：オン/オフ
             if( Input.GetKeyDown( m_cfg.KeyTogglePower.ToLower())) {
                 m_Power = m_Power + 1;
