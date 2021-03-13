@@ -1,12 +1,14 @@
-using System;
 using UnityEngine;
 using UnityInjector;
 using UnityInjector.Attributes;
 using UnityEngine.SceneManagement;
+using System;
 using System.Text.RegularExpressions;
+
 namespace CM3D2.BinbolusVR
 {
-    [PluginName( "BinbolusVRforC(O)M3D2" ), PluginVersion( "1.8.0.0" )]
+    [   PluginName( "BinbolusVR" ),
+        PluginVersion( "2.0.0.0" )]
 
     public class BinbolusVR : PluginBase
     {
@@ -14,7 +16,8 @@ namespace CM3D2.BinbolusVR
         private enum DEBUG_LEVELS {
             NONE                = 0,
             SHOW_CAPTION        = 1,
-            PARALLAX_SCALE_ADJ  = 2,
+            SCALE_ADJ_PARALLAX  = 2,
+            SCALE_ADJ_FOV       = 3,
         }
         private struct _CONFIG {
             // https://github.com/pirolix/CM3D2.BinbolusVR.Plugin/blob/master/README.md#設定ファイル
@@ -23,22 +26,24 @@ namespace CM3D2.BinbolusVR
             public string       KeyTogglePower;
             public string       KeyToggleMode;
             public float        ParallaxScale;
+            public float        FOVScale;
             public string       DefaultPower;
             public string       DefaultMode;
             public int          DebugLevel; // @see DEBUG_LEVELS enum
 
-            // 視差スケール調整モード関係
+            // 視差/視野スケール調整モード関係
             public const float  ParaSclAdjMax       = 1.0f;
-            public const float  ParaSclAdjStep      = 0.001f;
-            public string       ParaSclAdjKeyInc;
-            public string       ParaSclAdjKeyDec;
+            public const float  ParaSclAdjStep      = 0.01f;
+            public const float  FOVSclAdjStep       = 0.01f;
+            public string       SclAdjKeyInc;
+            public string       SclAdjKeyDec;
         }
         private _CONFIG         m_cfg;
         #endregion
         #region メンバ変数定義：状態管理関係
-        private bool            m_bOculusVRCM             = false;
-        private bool            m_bOculusVRCOM            = false;
-        private bool            m_AllowUpdate           = false;
+        private bool            m_bOculusVRCM       = false;
+        private bool            m_bOculusVRCOM      = false;
+        private bool            m_AllowUpdate       = false;
         private enum POWERS {
         _ENUM_FIRST_VALUE = 0,
             OFF = _ENUM_FIRST_VALUE,
@@ -59,20 +64,21 @@ namespace CM3D2.BinbolusVR
         public void Awake()
         {
             // 動作設定値の初期値
-            m_cfg.DebugLevel        = (int)DEBUG_LEVELS.SHOW_CAPTION;
+            m_cfg.DebugLevel        = (int) DEBUG_LEVELS.SHOW_CAPTION;
             m_cfg.ScenesEnable      = "5,14,4,20";
             m_cfg.PowersEnable      = "NAKED_EYES";
             m_cfg.ParallaxScale     = 0.1f;
+            m_cfg.FOVScale          = 1.5f;
             m_cfg.DefaultPower      = "OFF";
             m_cfg.DefaultMode       = "RL";
             m_cfg.KeyTogglePower    = "K";
             m_cfg.KeyToggleMode     = "L";
-            m_cfg.ParaSclAdjKeyInc  = "Page Up";
-            m_cfg.ParaSclAdjKeyDec  = "Page Down";
+            m_cfg.SclAdjKeyInc      = "Page Up";
+            m_cfg.SclAdjKeyDec      = "Page Down";
 
             // VRモードでは動作しない
-            m_bOculusVRCM = Application.dataPath.Contains( "CM3D2VRx64" );
-            m_bOculusVRCOM = Application.dataPath.Contains( "COM3D2VRx64" );
+            m_bOculusVRCM   = Application.dataPath.Contains( "CM3D2VRx64" );
+            m_bOculusVRCOM  = Application.dataPath.Contains( "COM3D2VRx64" );
             if( m_bOculusVRCM || m_bOculusVRCOM) {
                 Console.WriteLine( "{0}:you are playing with True VR, so binbolusVR is off", GetPluginName());
                 return;
@@ -87,16 +93,13 @@ namespace CM3D2.BinbolusVR
             m_AllowUpdate = false;
             if( m_bOculusVRCM || m_bOculusVRCOM )
                 return;
-            //Console.WriteLine( "now scene is {0}",SceneManager.GetActiveScene().name);
-            bool isdance = false;
-            //scene名を正規表現で検出し ダンスの場合isdanceをtrueにセット
-            isdance = Regex.IsMatch(SceneManager.GetActiveScene().name, "SceneDance_.+_Release");
-            //Console.WriteLine( "now isdance is {0}",isdance);
+            //scene名を正規表現で検出し ダンスの場合isdanceをセット
+            bool isdance = Regex.IsMatch( SceneManager.GetActiveScene().name, "SceneDance_.+_Release" );
             // 現在の level が ScenesEnable リストに含まれている or ダンスシーンなら有効にする
-            if(( "," + m_cfg.ScenesEnable + "," ).Contains( level.ToString())
-                    || m_cfg.ScenesEnable.ToUpper().Contains( "ALL" ) || isdance)
+            if(( "," + m_cfg.ScenesEnable + "," ).Contains( "," + level.ToString() + "," )
+                    || m_cfg.ScenesEnable.ToUpper().Contains( "ALL" )
+                    || isdance)
             {
-                //Console.WriteLine( "now level is {0},binbolus plugin is called",level);
                 // 左目用カメラ
                 m_CameraL = (new GameObject( "ParallaxCameraL" )).AddComponent<Camera>();
                 m_CameraL.CopyFrom( Camera.main );
@@ -122,9 +125,12 @@ namespace CM3D2.BinbolusVR
                 //メインカメラが向いている方向を保存
                 Vector3 v = mainCameraT.transform.localEulerAngles;
                 //メインカメラの向きに応じて視差を生成 
-                Vector3 parallax = (new Vector3( Mathf.Cos( v.y * Mathf.Deg2Rad ) * Mathf.Cos(v.z * Mathf.Deg2Rad ),
-                             Mathf.Cos(v.x * Mathf.Deg2Rad) * Mathf.Sin(v.z * Mathf.Deg2Rad), -Mathf.Sin( v.y * Mathf.Deg2Rad ) * Mathf.Cos(v.z * Mathf.Deg2Rad)))
+                Vector3 parallax = (new Vector3(
+                        Mathf.Cos( v.y * Mathf.Deg2Rad ) * Mathf.Cos( v.z * Mathf.Deg2Rad ),
+                        Mathf.Cos( v.x * Mathf.Deg2Rad ) * Mathf.Sin( v.z * Mathf.Deg2Rad ),
+                       -Mathf.Sin( v.y * Mathf.Deg2Rad ) * Mathf.Cos( v.z * Mathf.Deg2Rad )))
                     * m_cfg.ParallaxScale
+               //     * m_cfg.FOVScale
                     * ( m_Mode == "RL" ? -1 : 1 );
                 //Console.WriteLine( "AroundAngle x={0} y={1},z={2}", v.x, v.y, v.z);
                 // カメラの場所を視差分だけずらして
@@ -133,6 +139,8 @@ namespace CM3D2.BinbolusVR
                 // メインカメラの向き(保存済み)に合わせて両目カメラを向ける
                 m_CameraL.transform.localEulerAngles = v;
                 m_CameraR.transform.localEulerAngles = v;
+                // Field of View の調整
+                m_CameraL.fieldOfView = m_CameraR.fieldOfView = Camera.main.fieldOfView * m_cfg.FOVScale;
             }
 
             // キー入力で切替える：オン/オフ
@@ -156,19 +164,31 @@ namespace CM3D2.BinbolusVR
             }
 
             // ParallaxScale の調整モード
-            if( (int)DEBUG_LEVELS.PARALLAX_SCALE_ADJ == m_cfg.DebugLevel )
+            if( (int)DEBUG_LEVELS.SCALE_ADJ_PARALLAX == m_cfg.DebugLevel )
             {
-                if( Input.GetKey( m_cfg.ParaSclAdjKeyInc.ToLower()) && m_cfg.ParallaxScale < _CONFIG.ParaSclAdjMax ) {
-                    m_cfg.ParallaxScale += _CONFIG.ParaSclAdjStep
-                            * ( Input.GetKey( KeyCode.RightShift ) ? 10 : 1 );
+                if( Input.GetKey( m_cfg.SclAdjKeyInc.ToLower()) && m_cfg.ParallaxScale < _CONFIG.ParaSclAdjMax ) {
+                    m_cfg.ParallaxScale += _CONFIG.ParaSclAdjStep;
                     if( _CONFIG.ParaSclAdjMax < m_cfg.ParallaxScale )
                         m_cfg.ParallaxScale = _CONFIG.ParaSclAdjMax;
                 }
-                if( Input.GetKey( m_cfg.ParaSclAdjKeyDec.ToLower()) && 0.0f < m_cfg.ParallaxScale ) {
-                    m_cfg.ParallaxScale -= _CONFIG.ParaSclAdjStep
-                            * ( Input.GetKey( KeyCode.RightShift ) ? 10 : 1 );
+                if( Input.GetKey( m_cfg.SclAdjKeyDec.ToLower()) && 0.0f < m_cfg.ParallaxScale ) {
+                    m_cfg.ParallaxScale -= _CONFIG.ParaSclAdjStep;
                     if( m_cfg.ParallaxScale < 0.0f )
                         m_cfg.ParallaxScale = 0.0f;
+                }
+            }
+            // FOVScale の調整モード
+            if( (int)DEBUG_LEVELS.SCALE_ADJ_FOV == m_cfg.DebugLevel )
+            {
+                if( Input.GetKey( m_cfg.SclAdjKeyInc.ToLower()) && m_cfg.FOVScale < 2.0f ) {
+                    m_cfg.FOVScale += _CONFIG.FOVSclAdjStep;
+                    if( 2.0f < m_cfg.FOVScale )
+                        m_cfg.FOVScale = 2.0f;
+                }
+                if( Input.GetKey( m_cfg.SclAdjKeyDec.ToLower()) && 1.0f < m_cfg.FOVScale ) {
+                    m_cfg.FOVScale -= _CONFIG.FOVSclAdjStep;
+                    if( m_cfg.FOVScale < 1.0f )
+                        m_cfg.FOVScale = 1.0f;
                 }
             }
         }
@@ -187,10 +207,12 @@ namespace CM3D2.BinbolusVR
                     label_text = m_Power.ToString() + "\n" +
                             ( m_Mode == "RL" ? "交差法" : "平行法" ) +
                             " (" + m_cfg.KeyToggleMode + "キーで切替)\n";
-                    if( (int)DEBUG_LEVELS.PARALLAX_SCALE_ADJ == m_cfg.DebugLevel )
+                    if( (int)DEBUG_LEVELS.SCALE_ADJ_PARALLAX == m_cfg.DebugLevel )
                         label_text += "ParallaxScale=" + m_cfg.ParallaxScale.ToString("f3");
+                    if( (int)DEBUG_LEVELS.SCALE_ADJ_FOV == m_cfg.DebugLevel )
+                        label_text += "FOVScale=" + m_cfg.FOVScale.ToString("f3");
                 }
-                GUI.Label( new Rect( 20,20, 200,100 ), label_text );
+                GUI.Label( new Rect( 20,20, 300,100 ), label_text );
             }
         }
 
@@ -206,21 +228,23 @@ namespace CM3D2.BinbolusVR
                 // 裸眼による交差法/平衡法
                 m_CameraL.rect = new Rect( 0.0f, 0.0f, 0.5f, 1.0f );
                 m_CameraR.rect = new Rect( 0.5f, 0.0f, 0.5f, 1.0f );
-                m_CameraL.aspect = m_CameraR.aspect = 1.0f;
+                m_CameraL.aspect = m_CameraR.aspect = Camera.main.aspect / 2.0f;
                 break;
 
             case POWERS.SIDEBYSIDE:
                 // HMD などの左右分割方式
                 m_CameraL.rect = new Rect( 0.0f, 0.0f, 0.5f, 1.0f );
                 m_CameraR.rect = new Rect( 0.5f, 0.0f, 0.5f, 1.0f );
-                m_CameraL.aspect = m_CameraR.aspect = 2.0f;
+                m_CameraL.aspect = m_CameraR.aspect = Camera.main.aspect;
+                // ToDo: m_CameraL.fieldOfView = m_CameraR.fieldOfView = ...
                 break;
 
             case POWERS.TOPANDBOTTOM:
                 // HMD などの上下分割方式
                 m_CameraL.rect = new Rect( 0.0f, 0.0f, 1.0f, 0.5f );
                 m_CameraR.rect = new Rect( 0.0f, 0.5f, 1.0f, 0.5f );
-                m_CameraL.aspect = m_CameraR.aspect = 2.0f;
+                m_CameraL.aspect = m_CameraR.aspect = Camera.main.aspect;
+                // ToDo: m_CameraL.fieldOfView = m_CameraR.fieldOfView = ...
                 break;
 
             case POWERS.OFF:
@@ -265,10 +289,11 @@ namespace CM3D2.BinbolusVR
             m_cfg.DefaultPower   = GetPreferences( "Config", "DefaultPower", m_cfg.DefaultPower ).ToUpper();
             m_cfg.DefaultMode    = GetPreferences( "Config", "DefaultMode", m_cfg.DefaultMode ).ToUpper();
             m_cfg.ParallaxScale  = GetPreferences( "Config", "ParallaxScale", m_cfg.ParallaxScale );
+            m_cfg.FOVScale       = GetPreferences( "Config", "FOVScale", m_cfg.FOVScale );
             m_cfg.KeyTogglePower = GetPreferences( "Key", "TogglePower", m_cfg.KeyTogglePower ).ToUpper();
             m_cfg.KeyToggleMode  = GetPreferences( "Key", "ToggleMode", m_cfg.KeyToggleMode ).ToUpper();
-            m_cfg.ParaSclAdjKeyInc  = GetPreferences( "Key", "ParaSclAdjKeyInc", m_cfg.ParaSclAdjKeyInc ).ToUpper();
-            m_cfg.ParaSclAdjKeyDec  = GetPreferences( "Key", "ParaSclAdjKeyDec", m_cfg.ParaSclAdjKeyDec ).ToUpper();
+            m_cfg.SclAdjKeyInc  = GetPreferences( "Key", "SclAdjKeyInc", m_cfg.SclAdjKeyInc ).ToUpper();
+            m_cfg.SclAdjKeyDec  = GetPreferences( "Key", "SclAdjKeyDec", m_cfg.SclAdjKeyDec ).ToUpper();
 
             if( (int)DEBUG_LEVELS.NONE != m_cfg.DebugLevel ) {
                 Console.WriteLine( "{0}: Config: DebugLevel= {1}", GetPluginName(), m_cfg.DebugLevel );
@@ -277,11 +302,12 @@ namespace CM3D2.BinbolusVR
                 Console.WriteLine( "{0}: Config: DefaultPower= {1}", GetPluginName(), m_cfg.DefaultPower );
                 Console.WriteLine( "{0}: Config: DefaultMode= {1}", GetPluginName(), m_cfg.DefaultMode );
                 Console.WriteLine( "{0}: Config: ParallaxScale= {1}", GetPluginName(), m_cfg.ParallaxScale );
+                Console.WriteLine( "{0}: Config: FOVScale= {1}", GetPluginName(), m_cfg.FOVScale );
                 // キー設定 @see http://docs.unity3d.com/Manual/ConventionalGameInput.html
                 Console.WriteLine( "{0}: Key: KeyTogglePower= {1}", GetPluginName(), m_cfg.KeyTogglePower );
                 Console.WriteLine( "{0}: Key: KeyToggleMode= {1}", GetPluginName(), m_cfg.KeyToggleMode );
-                Console.WriteLine( "{0}: Key: ParaSclAdjKeyInc= {1}", GetPluginName(), m_cfg.ParaSclAdjKeyInc );
-                Console.WriteLine( "{0}: Key: ParaSclAdjKeyDec= {1}", GetPluginName(), m_cfg.ParaSclAdjKeyDec );
+                Console.WriteLine( "{0}: Key: SclAdjKeyInc= {1}", GetPluginName(), m_cfg.SclAdjKeyInc );
+                Console.WriteLine( "{0}: Key: SclAdjKeyDec= {1}", GetPluginName(), m_cfg.SclAdjKeyDec );
             }
         }
 
