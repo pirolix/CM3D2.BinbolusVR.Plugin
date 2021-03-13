@@ -1,5 +1,13 @@
 # 更新履歴
 
+## 2.0.0.0
+ * Special Thanks to [Aikawa Fuyuka](/FykAikawa)
+   * COM3D2 に対応
+   * ダンスシーンで自動起動
+   * 視差ベクトルの計算方法を変更
+ * aspect がずっと変だった修正
+ * 画面分割時、見切れることがあるので 視野(Field Of View)調整モードを追加
+
 ## 0.0.1.6
  * [動作対象となるlevelを設定ファイルで指定できるように＞SceneEnable](../../commit/d1995ba2ddc9f633d7dc6ea7fcc65dfc2435047f)
  * [シーン切り替え後のデフォルト状態を設定できるようにした＞DefaultPower, DefaultMode](../../commit/0e39be455668719754751da3385742f3b7dbd021)
