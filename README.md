@@ -1,26 +1,29 @@
 # CM3D2.BinbolusVR.Plugin
-　メイドさんのエディット(level5)、夜伽シーン(level14)、ダンスシーン(level4,20)において、画面を分割して[両眼視差立体視](https://ja.wikipedia.org/wiki/%E7%AB%8B%E4%BD%93%E8%A6%96)を可能にする UnityInjector プラグインです。公式から [Oculus VR 対応パッチ](http://kissdiary.blog11.fc2.com/blog-entry-571.html)が公開されていますが、Oculus なんて立派なモン持ってねーYO！　貧乏人ナメんなYO！　貧乏＋Oculus VR＝ビンボラスVR ってことで。
+　メイドさんのエディット(level5)、夜伽シーン(level14)、ダンスシーンなどで、画面を分割して[両眼視差立体視](https://ja.wikipedia.org/wiki/%E7%AB%8B%E4%BD%93%E8%A6%96)を可能にする UnityInjector プラグインです。公式から [Oculus VR 対応パッチ](http://kissdiary.blog11.fc2.com/blog-entry-571.html)が公開されていますが、Oculus なんて立派なモン持ってねーYO！　貧乏人ナメんなYO！　貧乏＋Oculus VR＝ビンボラスVR ってことで。
 
 　下のサンプル画像で立体視できない人には、導入しても裸眼での立体視モードは意味がありません。がんばって練習しよう。裸眼での立体視が苦手だったり、どっぷり没入したい人向けに Head Mount Display でも使えるようになりました (New@0.0.1.5)
+
 ![裸眼での交差法立体視の画像サンプル](sample_cross1.png) 
 
 ## 機能
- * 右目と左目ごとに視差を考慮した画面を表示して両眼視差立体視を可能にします
+ * 右目と左目ごとに視差を考慮した画像を表示して両眼視差立体視を可能にします
  * 裸眼での立体視では、交差法または平行法の切り替えが可能です
  * Head Mount Display などで使えるように SideBySide または TopAndBottom 表示方式に対応しています (New@0.0.1.5) #1
 
 ## 使い方
- 0. 下準備
-   0. [UnityInjector](http://www.hongfire.com/forum/showthread.php/444567-UnityInjector-Plugin-Powered-Unity-Code-Injector)が必要です。[neguse11 さまのネットワークインストーラーもどき](https://github.com/neguse11/cm3d2_plugins_okiba)を利用しての導入を強く推奨。ちょー楽チン。
-   1. `(ゲームのインストールパス)/UnityInjector`以下に`CM3D2.BinbolusVR.Plugin.dll`をコピーします。
- 1. CM3D2を起動してゲームをプレイ開始、以下のシーンで立体視モードに切り替えられます。
+1. COM3D2 での下準備
+   * Sybaris2 を導入しておいてください。
+   * `Sybaris/UnityInjector` 以下に `CM3D2.BinbolusVR.Plugin.dll` をコピーします。
+1. CM3D2 での下準備
+   * Sybaris を導入しておいてください。
+   * `Sybaris/Plugins/UnityInjector` 以下に `CM3D2.BinbolusVR.Plugin.dll` をコピーします。
+1. ゲームを起動してゲームをプレイ開始、以下のシーンで立体視モードに切り替えられます。適用可能なシーンは設定ファイルで変更可能です。
    * メイドさんのエディット
    * 夜伽シーン
-   * ダンス/ドキドキ☆Fallin' Love (New@0.0.1.4)
-   * ダンス/entracne to you (New@0.0.1.4)
- 2. `K` キーを押すと、立体視モードを切り替えます。
+   * ダンス全般 (mod@2.0.0.0)
+1. `K` キーを押すと、立体視モードを切り替えます。
    * [Head Mount Display で使うには？](HeadMountDisplay.md)
- 3. `L` キーを押すと、視差モードを切り替えます。または Up-And-Bottom 表示モードで、左右どちらの画像を画面の上下に表示するか切り替えます。見やすい方でお使いください。
+1. `L` キーを押すと、視差モードを切り替えます。または Up-And-Bottom 表示モードで、左右どちらの画像を画面の上下に表示するか切り替えます。見やすい方でお使いください。
    * 交差法 … 寄り目にして左右の目でそれぞれ反対の画像を見る方法
    * 平行法 … 遠くを見るようにしながら左右の目でそれぞれの画像を見る方法
 
@@ -34,7 +37,7 @@
  * 0 = 画面上のキャプションを表示しません。キー操作も覚えたし、視差スケールの調整もこれでバッチリ、という方に。
  * 1 = 画面上に立体視モードやキー操作の情報を表示します。
  * 2 = 視差スケール調整モード(後述)を有効にします。
- * 3 = 視野スケール調整モード(後述)を有効にします。
+ * 3 = 視野スケール調整モード(後述)を有効にします。(New@2.0.0.0)
 
 #### `[Config] ScenesEnable` (New@0.0.1.6)
 　立体視モードに切り替え可能なシーンの level を空白/カンマ区切りで列挙します。`ALL` とすると、(実用性はともかくとして)全てのシーンが対象になります。デフォルトでは、エディット・夜伽・ダンスシーンで有効(`ScenesEnable=5,14,4,20`)になっています。 
@@ -64,7 +67,7 @@
 #### `[Config] ParallaxScale`
 　両目の距離を指定するスケール値です。大きくすると画像のズレ(視差)が大きくなり立体感が増しますが、あまり大きくしすぎると結像しにくくなります。調整には視差スケール調整モードを利用いただくと便利です。
 
-#### `[Config] FOVScale`
+#### `[Config] FOVScale` (New@2.0.0.0)
 　立体視モードの際、画面分割によって有効表示範囲が狭くなり、特にダンスシーンなどでは左右が見切れるようになります。そこで、視野角を変更することで、表示は小さくなりますが、より広範囲を投影できるようにします。調整には視差スケール調整モードを利用いただくと便利です。
 
 #### `[Key] TogglePower`
@@ -73,9 +76,8 @@
 #### `[Key] ToggleMode`
 　視差モードの交差法/平行法の切り替えに利用するキーを指定します。デフォルトで `L` キーが割り当てられていますが、他のプラグインと衝突する場合などに変更してください。
 
-#### `[Key] ParaSclAdjKeyInc/Dec` (New@1.7.0.0)
+#### `[Key] SclAdjKeyInc/Dec` (New@1.7.0.0)(mod@2.0.0.0)
 　視差スケール調整モードで `ParallaxScale` 値の増減に使用するキーを指定します。デフォルトで `Page Up/Down` キーが割り当てられていますが、他のプラグインと衝突する場合などに変更してください。
-
 
 ### 視差スケール調整モード (New@0.0.1.6)
  * `DebugLevel=2` と設定した場合、視差スケール調整モードが有効になります。
@@ -85,15 +87,17 @@
 
 ### 視野スケール調整モード (New@2.0.0.0)
  * `DebugLevel=3` と設定した場合、視野スケール調整モードが有効になります。
+ * `NAKED_EYES`モードでは画面幅が半分になるため、複数人のダンスシーンなどで左右が見切れてしまいます。カメラ画角を広げることで、キャラ表示は小さくなりますが、左右を広く表示できるようにします。
  * 立体視モードを切り替えると、`FOVScale` 値を `PageUp`キー/`PageDown`キーで増減できるようになります。
  * 変更後の値は設定ファイルに書き戻されませんので、**ゲームを再起動すると元に戻ってしまいます。**最適な値に調整が済んだら、画面上に表示された値を控えておいて、設定ファイルに書き戻してください。
  * ~~最適な視差スケールを決定するための一時的な機能ですので操作キーは変更できません。他プラグインなどとキーバインドが衝突しても泣かない。~~増減に使用するキーは、設定ファイルの `[Key] SclAdjKeyInc/Dec` で変更できます。
 
 ## 自前でコンパイルするには
-[neguse11 さまのネットワークインストーラーもどき](https://github.com/neguse11/cm3d2_plugins_okiba)に居候しています。`cm3d2_plugins_okiba-master`フォルダの下に`CM3D2.BinbolusVR.Plugin`ディレクトリを置いて`(ゲームのインストールパス)/cm3d2_plugins_okiba-master/CM3D2.BinbolusVR.Plugin/src/compile.bat`を実行してください。追加で ExIni ライブラリを利用しています。
+`AutoCompile`に対応しています。
 
 ## 動作確認
-* COM3D2 (New@2.0.0.0)
+* CM3D2 1.66
+* COM3D2 1.55 (New@2.0.0.0)
 * [neguse11/SkillCommandShortCut](/neguse11/cm3d2_plugins_okiba) プラグイン併用可
 * [neguse11/MaidVoicePitch](/neguse11/cm3d2_plugins_okiba) プラグイン併用可
 * [k8PzhOFo0/CM3D2CameraUtility.Plugin](/k8PzhOFo0/CM3D2CameraUtility.Plugin) 併用可

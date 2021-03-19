@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 namespace CM3D2.BinbolusVR
 {
     [   PluginName( "BinbolusVR" ),
-        PluginVersion( "2.0.0.0" )]
+        PluginVersion( "2.1.0.319" )]
 
     public class BinbolusVR : PluginBase
     {
@@ -54,6 +54,7 @@ namespace CM3D2.BinbolusVR
         }
         private POWERS          m_Power;
         private string          m_Mode;
+        private bool            m_isDance;
         #endregion
         #region メンバ変数定義：オブジェクト
         private Camera          m_CameraL;
@@ -94,11 +95,11 @@ namespace CM3D2.BinbolusVR
             if( m_bOculusVRCM || m_bOculusVRCOM )
                 return;
             //scene名を正規表現で検出し ダンスの場合isdanceをセット
-            bool isdance = Regex.IsMatch( SceneManager.GetActiveScene().name, "SceneDance_.+_Release" );
+            m_isDance = Regex.IsMatch( SceneManager.GetActiveScene().name, "SceneDance_.+_Release" );
             // 現在の level が ScenesEnable リストに含まれている or ダンスシーンなら有効にする
             if(( "," + m_cfg.ScenesEnable + "," ).Contains( "," + level.ToString() + "," )
                     || m_cfg.ScenesEnable.ToUpper().Contains( "ALL" )
-                    || isdance)
+                    || m_isDance)
             {
                 // 左目用カメラ
                 m_CameraL = (new GameObject( "ParallaxCameraL" )).AddComponent<Camera>();
@@ -119,29 +120,6 @@ namespace CM3D2.BinbolusVR
         {
             if( !m_AllowUpdate )
                 return;
-
-            if( POWERS.OFF != m_Power ) {
-                Transform mainCameraT = Camera.main.transform;
-                //メインカメラが向いている方向を保存
-                Vector3 v = mainCameraT.transform.localEulerAngles;
-                //メインカメラの向きに応じて視差を生成 
-                Vector3 parallax = (new Vector3(
-                        Mathf.Cos( v.y * Mathf.Deg2Rad ) * Mathf.Cos( v.z * Mathf.Deg2Rad ),
-                        Mathf.Cos( v.x * Mathf.Deg2Rad ) * Mathf.Sin( v.z * Mathf.Deg2Rad ),
-                       -Mathf.Sin( v.y * Mathf.Deg2Rad ) * Mathf.Cos( v.z * Mathf.Deg2Rad )))
-                    * m_cfg.ParallaxScale
-               //     * m_cfg.FOVScale
-                    * ( m_Mode == "RL" ? -1 : 1 );
-                //Console.WriteLine( "AroundAngle x={0} y={1},z={2}", v.x, v.y, v.z);
-                // カメラの場所を視差分だけずらして
-                m_CameraL.transform.position = mainCameraT.position - parallax;
-                m_CameraR.transform.position = mainCameraT.position + parallax;
-                // メインカメラの向き(保存済み)に合わせて両目カメラを向ける
-                m_CameraL.transform.localEulerAngles = v;
-                m_CameraR.transform.localEulerAngles = v;
-                // Field of View の調整
-                m_CameraL.fieldOfView = m_CameraR.fieldOfView = Camera.main.fieldOfView * m_cfg.FOVScale;
-            }
 
             // キー入力で切替える：オン/オフ
             if( Input.GetKeyDown( m_cfg.KeyTogglePower.ToLower())) {
@@ -177,6 +155,7 @@ namespace CM3D2.BinbolusVR
                         m_cfg.ParallaxScale = 0.0f;
                 }
             }
+
             // FOVScale の調整モード
             if( (int)DEBUG_LEVELS.SCALE_ADJ_FOV == m_cfg.DebugLevel )
             {
@@ -191,6 +170,39 @@ namespace CM3D2.BinbolusVR
                         m_cfg.FOVScale = 1.0f;
                 }
             }
+
+            if( POWERS.OFF == m_Power )
+                return;
+
+            //メインカメラが向いている方向を保存
+            Transform mainCameraT = Camera.main.transform;
+            Vector3 v = mainCameraT.localEulerAngles;
+
+            //メインカメラの向きに応じて視差を生成 
+            Vector3 parallax = (new Vector3(
+                    Mathf.Cos( v.y * Mathf.Deg2Rad ) * Mathf.Cos( v.z * Mathf.Deg2Rad ),
+                    Mathf.Cos( v.x * Mathf.Deg2Rad ) * Mathf.Sin( v.z * Mathf.Deg2Rad ),
+                   -Mathf.Sin( v.y * Mathf.Deg2Rad ) * Mathf.Cos( v.z * Mathf.Deg2Rad )))
+                * m_cfg.ParallaxScale
+                * ( m_Mode == "RL" ? -1 : 1 );
+
+            // カメラの場所を視差分だけずらして
+            m_CameraL.transform.position = mainCameraT.position - parallax;
+            m_CameraR.transform.position = mainCameraT.position + parallax;
+
+            // メインカメラの向き(保存済み)に合わせて両目カメラを向ける
+            // ダンスシーンでは MainCamera.GetTargetPos が不正になることがある
+            if( m_isDance ){
+                m_CameraL.transform.localEulerAngles = v;
+                m_CameraR.transform.localEulerAngles = v;
+            } else {
+                Vector3 tp = GameMain.Instance.MainCamera.GetTargetPos();
+                m_CameraL.transform.LookAt( tp, mainCameraT.up );
+                m_CameraR.transform.LookAt( tp, mainCameraT.up );
+            }
+
+            // Field of View の調整
+            m_CameraL.fieldOfView = m_CameraR.fieldOfView = Camera.main.fieldOfView * m_cfg.FOVScale;
         }
 
         /// <summary>GUI レイヤの描画？など</summary>
@@ -198,22 +210,20 @@ namespace CM3D2.BinbolusVR
         {
             if( !m_AllowUpdate )
                 return;
+            if( (int)DEBUG_LEVELS.NONE == m_cfg.DebugLevel )
+                return;
 
-            if( (int)DEBUG_LEVELS.NONE != m_cfg.DebugLevel ) {
-                string label_text = "";
-                if( POWERS.OFF == m_Power )
-                    label_text = m_cfg.KeyTogglePower + "キーで" + GetPluginName() + "をオン";
-                else {
-                    label_text = m_Power.ToString() + "\n" +
-                            ( m_Mode == "RL" ? "交差法" : "平行法" ) +
-                            " (" + m_cfg.KeyToggleMode + "キーで切替)\n";
-                    if( (int)DEBUG_LEVELS.SCALE_ADJ_PARALLAX == m_cfg.DebugLevel )
-                        label_text += "ParallaxScale=" + m_cfg.ParallaxScale.ToString("f3");
-                    if( (int)DEBUG_LEVELS.SCALE_ADJ_FOV == m_cfg.DebugLevel )
-                        label_text += "FOVScale=" + m_cfg.FOVScale.ToString("f3");
-                }
-                GUI.Label( new Rect( 20,20, 300,100 ), label_text );
+            string label_text = m_cfg.KeyTogglePower + "キーで" + GetPluginName() + "をオン";
+            if( POWERS.OFF != m_Power ){
+                label_text = m_Power.ToString() + "\n" +
+                        ( m_Mode == "RL" ? "交差法" : "平行法" ) +
+                        " (" + m_cfg.KeyToggleMode + "キーで切替)\n";
+                if( (int)DEBUG_LEVELS.SCALE_ADJ_PARALLAX == m_cfg.DebugLevel )
+                    label_text += "ParallaxScale=" + m_cfg.ParallaxScale.ToString("f3");
+                if( (int)DEBUG_LEVELS.SCALE_ADJ_FOV == m_cfg.DebugLevel )
+                    label_text += "FOVScale=" + m_cfg.FOVScale.ToString("f3");
             }
+            GUI.Label( new Rect( 20,20, 300,100 ), label_text );
         }
 
         /// <summary>立体視のオン/オフを設定する</summary>
@@ -222,6 +232,7 @@ namespace CM3D2.BinbolusVR
             // パワー ON/OFF
             m_CameraL.gameObject.SetActive( POWERS.OFF != power );
             m_CameraR.gameObject.SetActive( POWERS.OFF != power );
+
             // POWERS に応じて画面分割などを変化する
             switch( power ) {
             case POWERS.NAKED_EYES:
@@ -249,8 +260,6 @@ namespace CM3D2.BinbolusVR
 
             case POWERS.OFF:
             default:
-                m_CameraL.gameObject.SetActive( false );
-                m_CameraR.gameObject.SetActive( false );
                 break;
             }
             return( m_Power = power );
